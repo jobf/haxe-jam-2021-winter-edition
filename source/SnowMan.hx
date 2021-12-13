@@ -2,8 +2,6 @@ package;
 
 class SnowMan extends FlxState
 {
-	var accelerationFactor:Float = 5;
-
 	override public function create()
 	{
 		super.create();
@@ -11,60 +9,42 @@ class SnowMan extends FlxState
 		bg = new FlxBackdrop("assets/images/bg.png");
 		bg.screenCenter();
 		add(bg);
-		snowman = new Snowman(40, FlxG.height - 300);
-		add(snowman);
-		FlxG.camera.follow(snowman.body, FlxCameraFollowStyle.TOPDOWN);
+		snowBody = new SnowBalls(40, FlxG.height - 300);
+		add(snowBody);
+		add(snowBody.head);
+		FlxG.camera.follow(snowBody.torso, FlxCameraFollowStyle.TOPDOWN);
 	}
 
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
-		handleSnowmanControls();
+		snowBody.handleSnowBallsControls();
 
 		if (FlxG.keys.justPressed.L)
 		{
-			trace('snowman x y [${snowman.x}, ${snowman.y}]');
-			snowman.log();
+			trace('SnowBalls x y [${snowBody.x}, ${snowBody.y}]');
+			snowBody.log();
 		}
 		if (FlxG.keys.justPressed.R)
 		{
 			FlxG.resetState();
 		}
 
-		bg.velocity.x = snowman.velocity.x * -1;
+		bg.velocity.x = snowBody.velocity.x * -1;
 	}
 
-	inline function handleSnowmanControls()
-	{
-		if (FlxG.keys.pressed.RIGHT)
-		{
-			snowman.velocity.x += accelerationFactor;
-		}
-		if (FlxG.keys.pressed.LEFT)
-		{
-			snowman.velocity.x -= accelerationFactor;
-		}
-		if (FlxG.keys.justPressed.UP)
-		{
-			snowman.jump();
-		}
-		if (FlxG.keys.justPressed.DOWN)
-		{
-			snowman.pop();
-		}
-	}
-
-	var snowman:Snowman;
+	var snowHead:Snowball;
+	var snowBody:SnowBalls;
 	var bg:FlxBackdrop;
 }
 
-class Snowman extends FlxSpriteGroup
+class SnowBalls extends FlxSpriteGroup
 {
-	var base:Snowball;
+	public var head(default, null):Snowball;
+	public var torso(default, null):Snowball;
+	public var base(default, null):Snowball;
 
-	public var body(default, null):Snowball;
-
-	var head:Snowball;
+	var shoulders:FlxSprite;
 	var jumpCoolOff:Delay;
 	var isJumpReady:Bool;
 	var popCoolOff:Delay;
@@ -74,26 +54,33 @@ class Snowman extends FlxSpriteGroup
 	var jumpVelocity:Float = 300;
 	var popVelocity:Float = 450;
 	var gravity:Float = 900;
+	var accelerationFactor:Float = 5;
 
 	public function new(x, y)
 	{
 		super();
 		base = new Snowball(x, y, "Large");
-		body = new Snowball(x, y - 48, "Mid");
-		head = new Snowball(x, body.y - 24, "Small");
+		torso = new Snowball(x, y - 48, "Mid");
+		torso.setSize(torso.width, torso.height * 4);
+		head = new Snowball(x, torso.y - 24, "Small");
+		head.immovable = false;
 		add(base);
-		add(body);
-		add(head);
-		base.moveMiddleX(50);
-		body.moveMiddleX(50);
-		head.moveMiddleX(50);
+		add(torso);
+		shoulders = new FlxSprite(x, torso.y);
+		shoulders.makeGraphic(Std.int(torso.width * 2), Std.int(torso.height), FlxColor.TRANSPARENT); // 0x6600FFFF
+		shoulders.immovable = true;
+		add(shoulders);
+		base.moveMiddleX(x);
+		torso.moveMiddleX(x);
+		shoulders.moveMiddleX(x);
+		head.moveMiddleX(x);
 		var delayFactory = new DelayFactory();
 		jumpCoolOff = delayFactory.Default(0.2, false, true);
 		isJumpReady = true;
 		popCoolOff = delayFactory.Default(0.2, false, true);
 		isPopReady = true;
 		isHeadAttached = true;
-		distanceHeadToBody = body.y - head.y;
+		distanceHeadToBody = torso.y - head.y;
 	}
 
 	override function update(elapsed:Float)
@@ -102,7 +89,27 @@ class Snowman extends FlxSpriteGroup
 		jumpCoolOff.wait(elapsed, setJumpIsReady);
 		popCoolOff.wait(elapsed, setPopIsReady);
 		contactGround();
-		contactBody();
+		syncHead();
+	}
+
+	public inline function handleSnowBallsControls()
+	{
+		if (FlxG.keys.pressed.RIGHT)
+		{
+			velocity.x += accelerationFactor;
+		}
+		if (FlxG.keys.pressed.LEFT)
+		{
+			velocity.x -= accelerationFactor;
+		}
+		if (FlxG.keys.justPressed.UP)
+		{
+			jump();
+		}
+		if (FlxG.keys.justPressed.DOWN)
+		{
+			pop();
+		}
 	}
 
 	inline function contactGround()
@@ -115,15 +122,33 @@ class Snowman extends FlxSpriteGroup
 		}
 	}
 
-	inline function contactBody()
+	inline function syncHead()
 	{
-		// do not pass head through body
+		// keep head with body
+		head.velocity.x = velocity.x;
+		if (isHeadAttached)
+		{
+			head.velocity.y = velocity.y;
+			separateHeadFromTorso();
+		}
+		else
+		{
+			connectHeadToTorso();
+		}
+	}
+
+	inline function connectHeadToTorso()
+	{
 		if (isHeadOnBody())
 		{
 			isHeadAttached = true;
 			head.acceleration.y = 0;
-			head.velocity.y = 0;
 		}
+	}
+
+	function separateHeadFromTorso()
+	{
+		head.y = torso.y - (head.height + 2);
 	}
 
 	function setJumpIsReady()
@@ -143,8 +168,8 @@ class Snowman extends FlxSpriteGroup
 
 	inline function isHeadOnBody()
 	{
-		// return head.y >= head.initialPosY;
-		return body.y - head.y <= distanceHeadToBody;
+		var headBottom = head.y + head.height;
+		return headBottom >= torso.y;
 	}
 
 	public function jump()
@@ -166,6 +191,8 @@ class Snowman extends FlxSpriteGroup
 	{
 		if (isPopReady && isHeadAttached)
 		{
+			trace('pop head');
+			separateHeadFromTorso();
 			isPopReady = false;
 			popCoolOff.start();
 			// get airborne
@@ -181,7 +208,7 @@ class Snowman extends FlxSpriteGroup
 	public function log()
 	{
 		base.log();
-		body.log();
+		torso.log();
 		head.log();
 	}
 }
@@ -198,12 +225,12 @@ class Snowball extends FlxSprite
 		this.style = style;
 		loadGraphic('assets/images/ball$style.png');
 		initialPosY = y;
-		// prevent separation on collides
-		immovable = true;
+		// reduce hitbox
+		setSize(width, height * 0.75);
 	}
 
 	public function log()
 	{
-		trace('$style y now $y init $initialPosY');
+		trace('$style y now $y init $initialPosY x now $x ceter X = ${this.centerX()}');
 	}
 }
