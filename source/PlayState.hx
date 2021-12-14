@@ -14,10 +14,12 @@ class PlayState extends BaseState
 	var lowObstaclesY:Int;
 	var midObstaclesY:Int;
 	var highObstaclesY:Int;
+	var hasReachedDistance:Bool;
 
 	override public function create()
 	{
 		super.create();
+		hasReachedDistance = false;
 		bgColor = FlxColor.WHITE;
 		level = Data.level;
 		bg = new FlxBackdrop("assets/images/bg.png");
@@ -86,6 +88,11 @@ class PlayState extends BaseState
 	{
 		super.update(elapsed);
 		snowBody.update(elapsed);
+		hasReachedDistance = bg.x * -1 > level.levelLength;
+		if (hasReachedDistance)
+		{
+			progressToNextLevel();
+		}
 		if (FlxG.keys.justPressed.UP)
 		{
 			snowBody.jump();
@@ -101,10 +108,19 @@ class PlayState extends BaseState
 
 		if (FlxG.keys.justPressed.L)
 		{
-			trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity}\n\n\n');
+			trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity} bg pos ${bg.x}, ${bg.y}\n\n\n');
 
 			snowBody.log();
 		}
+	}
+
+	function progressToNextLevel()
+	{
+		Data.level.levelLength += 1000;
+		Data.level.maxVelocity += 10;
+		Data.level.bgSpeedFactor += 0.7;
+		Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
+		FlxG.resetState();
 	}
 
 	function spawnRock()
@@ -113,6 +129,7 @@ class PlayState extends BaseState
 
 		var rock = rocks.getRock(FlxG.width, lowObstaclesY, rockWeight);
 		// trace('rock x,y ${rock.x},${rock.y}');
+
 		// rock.velocity.x = bg.velocity.x;
 		layers.bg.add(rock);
 	}

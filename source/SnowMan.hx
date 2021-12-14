@@ -5,6 +5,7 @@ typedef LevelStats =
 	var maxVelocity:Float;
 	var bgSpeedFactor:Float;
 	var snowManVelocityIncrement:Float;
+	var levelLength:Float;
 }
 
 class SnowBalls
