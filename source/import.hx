@@ -1,5 +1,6 @@
-import core.Delay;
-import core.FramesHelper;
+import Obstacles;
+import SnowMan;
+import core.*;
 import flixel.FlxCamera.FlxCameraFollowStyle;
 import flixel.FlxG;
 import flixel.FlxObject;
