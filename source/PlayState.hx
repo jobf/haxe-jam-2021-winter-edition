@@ -6,9 +6,14 @@ class PlayState extends BaseState
 	var snowBody:SnowBalls;
 	var bg:FlxBackdrop;
 	var rocks:Rocks;
+	var birds:Birds;
 	var rocksDelay:Delay;
+	var birdsDelay:Delay;
 	var accelerationDelay:Delay;
 	var level:LevelStats;
+	var lowObstaclesY:Int;
+	var midObstaclesY:Int;
+	var highObstaclesY:Int;
 
 	override public function create()
 	{
@@ -19,15 +24,19 @@ class PlayState extends BaseState
 		bg.screenCenter();
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
-		snowBody = new SnowBalls(128, FlxG.height - 150, level.maxVelocity);
+		snowBody = new SnowBalls(128, FlxG.height - 200, level.maxVelocity);
 
 		layers.entities.add(snowBody.base);
 		layers.entities.add(snowBody.torso);
 		layers.entities.add(snowBody.head);
 
-		layers.entities.add(snowBody.head);
+		lowObstaclesY = Std.int(snowBody.base.y + (snowBody.base.height - 10));
+		midObstaclesY = Std.int(snowBody.torso.y - 35);
+
 		rocks = new Rocks();
 		rocksDelay = BaseState.delays.Default(2, spawnRock, true, true);
+		birds = new Birds();
+		birdsDelay = BaseState.delays.Default(4, spawnBird, true, true);
 		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
 	}
 
@@ -57,6 +66,19 @@ class PlayState extends BaseState
 					r.velocity.x = bg.velocity.x;
 				}
 			});
+
+			birds.collisionGroup.forEachAlive((b) ->
+			{
+				if (b.x < -25)
+				{
+					b.kill();
+					b.visible = false;
+				}
+				else
+				{
+					b.velocity.x = bg.velocity.x * 1.2;
+				}
+			});
 		}
 	}
 
@@ -66,11 +88,16 @@ class PlayState extends BaseState
 		snowBody.update(elapsed);
 		if (FlxG.keys.justPressed.UP)
 		{
+			snowBody.jump();
+		}
+		if (FlxG.keys.justPressed.DOWN)
+		{
 			snowBody.pop();
 		}
 		handleCollisions();
 		accelerationDelay.wait(elapsed);
 		rocksDelay.wait(elapsed);
+		birdsDelay.wait(elapsed);
 
 		if (FlxG.keys.justPressed.L)
 		{
@@ -82,10 +109,20 @@ class PlayState extends BaseState
 
 	function spawnRock()
 	{
-		var rock = rocks.getRock(FlxG.width, Std.int(FlxG.height * 0.80), 0);
+		var rockWeight = FlxG.random.int(0, 2);
+
+		var rock = rocks.getRock(FlxG.width, lowObstaclesY, rockWeight);
 		// trace('rock x,y ${rock.x},${rock.y}');
-		rock.velocity.x = bg.velocity.x;
-		layers.foreground.add(rock);
+		// rock.velocity.x = bg.velocity.x;
+		layers.bg.add(rock);
+	}
+
+	function spawnBird()
+	{
+		var bird = birds.get(FlxG.width, midObstaclesY);
+		// trace('rock x,y ${rock.x},${rock.y}');
+
+		layers.foreground.add(bird);
 	}
 
 	inline function handleCollisions()
@@ -100,6 +137,15 @@ class PlayState extends BaseState
 				};
 				rock.collide();
 				snowBody.jump(bump);
+			}
+		});
+
+		FlxG.overlap(snowBody.collisionGroup, birds.collisionGroup, (snow:Snowball, bird:Obstacle) ->
+		{
+			if (!bird.isHit)
+			{
+				bird.collide();
+				snow.collide();
 			}
 		});
 	}
