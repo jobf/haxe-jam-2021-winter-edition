@@ -6,6 +6,7 @@ typedef Delay =
 	currentTime:Float,
 	isInProgress:Bool,
 	isResetAuto:Bool,
+	?onReady:() -> Void
 }
 
 class DelayFactory
@@ -17,20 +18,21 @@ class DelayFactory
 		this.framesPerSecond = framesPerSecond;
 	}
 
-	public function Default(durationSeconds:Float, isStarted:Bool = false, isResetAuto:Bool = false):Delay
+	public function Default(durationSeconds:Float, onReady:() -> Void, isStarted:Bool = false, isResetAuto:Bool = false):Delay
 	{
 		return {
 			duration: (durationSeconds * framesPerSecond) * (1 / framesPerSecond),
 			isInProgress: isStarted,
 			currentTime: 0.0,
-			isResetAuto: isResetAuto
+			isResetAuto: isResetAuto,
+			onReady: onReady
 		};
 	}
 }
 
 class DelayExtensions
 {
-	static public function wait(d:Delay, elapsed:Float, onFinish:Void->Void)
+	static public function wait(d:Delay, elapsed:Float)
 	{
 		if (!d.isInProgress)
 			return;
@@ -40,7 +42,7 @@ class DelayExtensions
 		{
 			d.isInProgress = d.isResetAuto;
 			d.currentTime = 0;
-			onFinish();
+			d.onReady();
 		}
 	}
 
