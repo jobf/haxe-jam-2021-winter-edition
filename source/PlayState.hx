@@ -7,8 +7,8 @@ class PlayState extends BaseState
 	var bg:FlxBackdrop;
 	var rocks:Rocks;
 	var birds:Birds;
-	var rocksDelay:Delay;
-	var birdsDelay:Delay;
+	var rocksDelay:DelayDistance;
+	var birdsDelay:DelayDistance;
 	var accelerationDelay:Delay;
 	var level:LevelStats;
 	var lowObstaclesY:Int;
@@ -36,9 +36,23 @@ class PlayState extends BaseState
 		midObstaclesY = Std.int(snowBody.torso.y - 35);
 
 		rocks = new Rocks();
-		rocksDelay = BaseState.delays.Default(2, spawnRock, true, true);
+		rocksDelay = {
+			stepTravelled: 500, // new rock every x pixels
+			lastTravelled: 0,
+			isInProgress: true,
+			isResetAuto: true,
+			onReady: spawnRock
+		}
+
 		birds = new Birds();
-		birdsDelay = BaseState.delays.Default(4, spawnBird, true, true);
+		birdsDelay = {
+			stepTravelled: 1000, // new bird every x pixels
+			lastTravelled: 0,
+			isInProgress: true,
+			isResetAuto: true,
+			onReady: spawnBird
+		}
+
 		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
 	}
 
@@ -103,8 +117,8 @@ class PlayState extends BaseState
 		}
 		handleCollisions();
 		accelerationDelay.wait(elapsed);
-		rocksDelay.wait(elapsed);
-		birdsDelay.wait(elapsed);
+		rocksDelay.wait(bg.x * -1);
+		birdsDelay.wait(bg.x * -1);
 
 		if (FlxG.keys.justPressed.L)
 		{
