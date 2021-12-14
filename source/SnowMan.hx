@@ -38,10 +38,12 @@ class SnowMan extends BaseState
 		bg.screenCenter();
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
-		snowBody = new SnowBalls(128, FlxG.height - 150);
-		snowBody.maxVelocity.x = level.maxVelocity;
-		snowBody.head.maxVelocity.x = level.maxVelocity;
-		layers.entities.add(snowBody);
+		snowBody = new SnowBalls(128, FlxG.height - 150, level.maxVelocity);
+
+		layers.entities.add(snowBody.base);
+		layers.entities.add(snowBody.torso);
+		layers.entities.add(snowBody.head);
+
 		layers.entities.add(snowBody.head);
 		rocks = new Rocks();
 		rocksDelay = BaseState.delays.Default(2, spawnRock, true, true);
@@ -59,9 +61,9 @@ class SnowMan extends BaseState
 			// trace('new snowBody.velocity.x ${snowBody.velocity.x}');
 		}
 		// if player is moving, back drop and other entities should be
-		if (snowBody.velocity.x > 0)
+		if (snowBody.base.velocity.x > 0)
 		{
-			bg.velocity.x = (snowBody.velocity.x * level.bgSpeedFactor) * -1;
+			bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
 			rocks.collisionGroup.forEachAlive((r) ->
 			{
 				if (r.x < -25)
@@ -80,22 +82,18 @@ class SnowMan extends BaseState
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		snowBody.update(elapsed);
 		if (FlxG.keys.justPressed.UP)
-		{
-			snowBody.jump();
-		}
-		if (FlxG.keys.justPressed.DOWN)
 		{
 			snowBody.pop();
 		}
-
 		handleCollisions();
 		accelerationDelay.wait(elapsed);
 		rocksDelay.wait(elapsed);
 
 		if (FlxG.keys.justPressed.L)
 		{
-			trace('\n\n\nSnowBalls x y [${snowBody.x}, ${snowBody.y}] vel ${snowBody.velocity} acc ${snowBody.acceleration}\n bg velocity ${bg.velocity}\n\n\n');
+			trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity}\n\n\n');
 
 			snowBody.log();
 		}
@@ -104,7 +102,7 @@ class SnowMan extends BaseState
 	function spawnRock()
 	{
 		var rock = rocks.getRock(FlxG.width, Std.int(FlxG.height * 0.80), 0);
-		trace('rock x,y ${rock.x},${rock.y}');
+		// trace('rock x,y ${rock.x},${rock.y}');
 		rock.velocity.x = bg.velocity.x;
 		layers.foreground.add(rock);
 	}
@@ -126,18 +124,19 @@ class SnowMan extends BaseState
 	}
 }
 
-class SnowBalls extends FlxSpriteGroup
+class SnowBalls
 {
 	public var head(default, null):Snowball;
 	public var torso(default, null):Snowball;
 	public var base(default, null):Snowball;
 
-	var shoulders:FlxSprite;
 	var jumpCoolOff:Delay;
 	var isJumpReady:Bool;
 	var popCoolOff:Delay;
 	var isPopReady:Bool;
+	var isOnGround:Bool;
 	var isHeadAttached:Bool;
+	var isTorsoAttached:Bool;
 	var distanceHeadToBody:Float;
 	var jumpVelocity:Float = 300;
 	var popVelocity:Float = 450;
@@ -145,39 +144,34 @@ class SnowBalls extends FlxSpriteGroup
 
 	public var accelerationFactor:Float = 5;
 
-	public function new(x, y)
+	public function new(x, y, maxVelocity)
 	{
-		super();
 		base = new Snowball(x, y, "Large");
 		torso = new Snowball(x, y - 48, "Mid");
-		torso.setSize(torso.width, torso.height * 4);
 		head = new Snowball(x, torso.y - 24, "Small");
+		base.maxVelocity.x = maxVelocity;
+		torso.maxVelocity.x = maxVelocity;
+		head.maxVelocity.x = maxVelocity;
 		head.immovable = false;
-		add(base);
-		add(torso);
-		shoulders = new FlxSprite(x, torso.y);
-		shoulders.makeGraphic(Std.int(torso.width * 2), Std.int(torso.height), FlxColor.TRANSPARENT); // 0x6600FFFF
-		shoulders.immovable = true;
-		add(shoulders);
 		base.moveMiddleX(x);
 		torso.moveMiddleX(x);
-		shoulders.moveMiddleX(x);
 		head.moveMiddleX(x);
 		jumpCoolOff = BaseState.delays.Default(0.2, setJumpIsReady, true);
 		isJumpReady = true;
 		popCoolOff = BaseState.delays.Default(0.2, setPopIsReady, true);
 		isPopReady = true;
 		isHeadAttached = true;
+		isOnGround = true;
 		distanceHeadToBody = torso.y - head.y;
 	}
 
-	override function update(elapsed:Float)
+	public function update(elapsed:Float)
 	{
-		super.update(elapsed);
 		jumpCoolOff.wait(elapsed);
 		popCoolOff.wait(elapsed);
 		contactGround();
 		syncHead();
+		syncTorso();
 	}
 
 	public inline function shouldAccelerate():Int
@@ -201,36 +195,48 @@ class SnowBalls extends FlxSpriteGroup
 		// do not pass base through ground
 		if (isBaseOnGround())
 		{
-			acceleration.y = 0;
-			velocity.y = 0;
+			isOnGround = true;
+			base.acceleration.y = 0;
+			base.velocity.y = 0;
 		}
 	}
 
 	inline function syncHead()
 	{
-		// keep head with body
+		// keep head with torso
 		if (isHeadAttached)
 		{
-			head.velocity.y = velocity.y;
+			head.velocity.y = base.velocity.y;
 			separateHeadFromTorso();
 		}
 		else
 		{
-			connectHeadToTorso();
+			isHeadAttached = isHeadOnTorso();
 		}
 	}
 
-	inline function connectHeadToTorso()
+	inline function syncTorso()
 	{
-		if (isHeadOnBody())
+		// keep torso with base
+		if (isTorsoAttached)
 		{
-			isHeadAttached = true;
+			torso.velocity.y = base.velocity.y;
+			separateTorsoFromBase();
+		}
+		else
+		{
+			isTorsoAttached = isTorsoOnBase();
 		}
 	}
 
 	inline function separateHeadFromTorso()
 	{
 		head.y = torso.y - (head.height + 2);
+	}
+
+	inline function separateTorsoFromBase()
+	{
+		torso.y = base.y - (torso.height + 2);
 	}
 
 	function setJumpIsReady()
@@ -250,47 +256,68 @@ class SnowBalls extends FlxSpriteGroup
 
 	inline function isBaseOnGround()
 	{
-		return base.y >= base.initialPosY;
+		return base.y >= base.groundedPosY;
 	}
 
-	inline function isHeadOnBody()
+	inline function isHeadOnTorso()
 	{
 		var headBottom = head.y + head.height;
 		return headBottom >= torso.y;
 	}
 
+	inline function isTorsoOnBase()
+	{
+		var torsoBottom = torso.y + torso.height;
+		return torsoBottom >= base.y;
+	}
+
 	public function jump(?velocityOverride:Float)
 	{
-		if (isJumpReady && isBaseOnGround())
-		{
-			isJumpReady = false;
-			jumpCoolOff.start();
-			velocityOverride = velocityOverride == null ? jumpVelocity : velocityOverride;
-			// get airborne
-			trace('jump velocityOverride $velocityOverride');
-			velocity.y = -velocityOverride;
-			// prevent jumping forever
-			maxVelocity.y = velocityOverride;
-			// accelerate towards ground
-			acceleration.y = gravity;
-		}
+		base.groundedPosY = base.y;
+		isOnGround = false;
+		velocityOverride = velocityOverride == null ? jumpVelocity : velocityOverride;
+		// get airborne
+		// trace('jump velocityOverride $velocityOverride');
+		base.velocity.y = -velocityOverride;
+		// prevent jumping forever
+		base.maxVelocity.y = velocityOverride;
+		// accelerate towards ground
+		base.acceleration.y = gravity;
 	}
 
 	public function pop()
 	{
-		if (isPopReady && isHeadAttached)
+		if (isPopReady)
 		{
-			trace('pop head');
-			separateHeadFromTorso();
+			if (isOnGround)
+			{
+				jump();
+			}
+			else if (isTorsoAttached)
+			{
+				separateTorsoFromBase();
+				// get airborne
+				torso.velocity.y = -popVelocity;
+				// prevent popping forever
+				torso.maxVelocity.y = popVelocity;
+				// accelerate towards ground
+				torso.acceleration.y = gravity;
+				isTorsoAttached = false;
+			}
+			else if (isHeadAttached)
+			{
+				separateHeadFromTorso();
+				// get airborne
+				head.velocity.y = -popVelocity;
+				// prevent popping forever
+				head.maxVelocity.y = popVelocity;
+				// accelerate towards ground
+				head.acceleration.y = gravity;
+				isHeadAttached = false;
+			}
+			// trace('pop');
 			isPopReady = false;
 			popCoolOff.start();
-			// get airborne
-			head.velocity.y = -popVelocity;
-			// prevent popping forever
-			head.maxVelocity.y = popVelocity;
-			// accelerate towards ground
-			head.acceleration.y = gravity;
-			isHeadAttached = false;
 		}
 	}
 
@@ -303,14 +330,15 @@ class SnowBalls extends FlxSpriteGroup
 
 	public function changeHorizontalSpeed(difference:Float)
 	{
-		velocity.x += difference;
-		head.velocity.x = velocity.x;
+		base.velocity.x += difference;
+		torso.velocity.x = base.velocity.x;
+		head.velocity.x = base.velocity.x;
 	}
 }
 
 class Snowball extends FlxSprite
 {
-	public var initialPosY(default, null):Float;
+	public var groundedPosY:Float;
 
 	var style:String;
 
@@ -319,14 +347,14 @@ class Snowball extends FlxSprite
 		super(x, y);
 		this.style = style;
 		loadGraphic('assets/images/ball$style.png');
-		initialPosY = y;
+		groundedPosY = y;
 		// reduce hitbox
 		setSize(width, height * 0.75);
 	}
 
 	public function log()
 	{
-		trace('$style x,y $x,$y initY $initialPosY center X = ${this.centerX()} vel ${velocity}');
+		trace('$style x,y $x,$y initY $groundedPosY center X = ${this.centerX()} vel ${velocity}');
 	}
 }
 
@@ -345,7 +373,7 @@ class Rock extends FlxSprite
 
 	public function collide()
 	{
-		trace('explode');
+		// trace('explode');
 		isHit = true;
 	}
 }
