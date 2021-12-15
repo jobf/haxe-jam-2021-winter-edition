@@ -140,7 +140,14 @@ class PlayState extends BaseState
 		accelerationDelay.wait(elapsed);
 		rocksDelay.wait(bg.x * -1);
 		birdsDelay.wait(bg.x * -1);
-
+		if (FlxG.keys.justReleased.T)
+		{
+			@:privateAccess
+			var b = snowBody.balls[0];
+			@:privateAccess
+			b.remove();
+			snowBody.removeBall(b);
+		}
 		if (FlxG.keys.justPressed.L)
 		{
 			trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity} bg pos ${bg.x}, ${bg.y}\n\n\n');
@@ -197,7 +204,10 @@ class PlayState extends BaseState
 			if (!bird.isHit)
 			{
 				bird.collide();
-				snow.collide();
+				if (!snow.surviveCollision())
+				{
+					snowBody.removeBall(snow);
+				};
 			}
 		});
 	}

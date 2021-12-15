@@ -27,9 +27,12 @@ class SnowBalls
 	public function new(x, y, maxVelocity)
 	{
 		collisionGroup = new FlxTypedGroup<Snowball>();
-		base = new Snowball(x, y, "Large", popVelocity);
-		torso = new Snowball(x, y - 48, "Mid", popVelocity);
-		head = new Snowball(x, torso.y - 38, "Small", popVelocity);
+		var floor = y + 192;
+		base = new Snowball(x, y, "Large", popVelocity, "base", floor);
+		torso = new Snowball(x, y - 48, "Mid", popVelocity, "torso", floor);
+		head = new Snowball(x, torso.y - 38, "Small", popVelocity, "head", floor);
+		torso.ballUnderneath = base;
+		head.ballUnderneath = torso;
 		collisionGroup.add(base);
 		collisionGroup.add(torso);
 		collisionGroup.add(head);
@@ -39,7 +42,6 @@ class SnowBalls
 		balls.push(base);
 		balls.push(torso);
 		balls.push(head);
-		// head.immovable = false;
 		base.moveMiddleX(x);
 		torso.moveMiddleX(x);
 		head.moveMiddleX(x);
@@ -55,18 +57,22 @@ class SnowBalls
 		popCoolOff.wait(elapsed);
 		for (i => b in balls)
 		{
-			// default to targeting ball at base of stack
-			var targetVelocity = balls[0].velocity.y;
-			if (i >= 1)
+			// is resting ? set same velocity as target
+			if (!b.isAirborne)
 			{
-				// if ball directly underneath is not attached, target that instead
-				var target = balls[i - 1];
-				if (!target.isAttached)
+				// default to targeting ball at base of stack
+				var targetVelocity = balls[0].velocity.y;
+				if (i >= 1)
 				{
-					targetVelocity = target.velocity.y;
+					// if ball directly underneath is not attached, target that instead
+					var target = balls[i - 1];
+					if (target.isAirborne)
+					{
+						targetVelocity = target.velocity.y;
+					}
 				}
+				b.velocity.y = targetVelocity;
 			}
-			syncVerticalVelocity(b, targetVelocity);
 		}
 	}
 
@@ -86,19 +92,6 @@ class SnowBalls
 		return accelerationChanged;
 	}
 
-	inline function syncVerticalVelocity(ball:Snowball, targetVelocity:Float)
-	{
-		if (ball.isAttached)
-		{
-			ball.velocity.y = targetVelocity;
-			ball.resetPositionY();
-		}
-		else
-		{
-			ball.resetAttachment();
-		}
-	}
-
 	function setJumpIsReady()
 	{
 		isJumpReady = true;
@@ -114,30 +107,12 @@ class SnowBalls
 		isPopReady = true;
 	}
 
-	inline function isBaseOnGround()
-	{
-		return base.y >= base.idlePositionY;
-	}
-
-	inline function isHeadOnTorso()
-	{
-		var headBottom = head.y + head.graphic.height;
-		var restingOnY = torso.alive ? torso.y : base.y;
-		return headBottom >= restingOnY;
-	}
-
-	inline function isTorsoOnBase()
-	{
-		var torsoBottom = torso.y + torso.graphic.height;
-		return torsoBottom >= base.y;
-	}
-
 	public function jump(?velocityOverride:Float)
 	{
 		if (isJumpReady)
 		{
 			var b = balls[0];
-			if (b.alive && b.isAttached)
+			if (b.alive && !b.isAirborne)
 			{
 				b.pop();
 				isJumpReady = false;
@@ -152,11 +127,12 @@ class SnowBalls
 		{
 			for (b in balls.slice(1))
 			{
-				if (b.alive && b.isAttached)
+				if (b.alive && !b.isAirborne)
 				{
 					b.pop();
 					isPopReady = false;
 					popCoolOff.start();
+
 					break;
 				}
 			}
@@ -176,25 +152,47 @@ class SnowBalls
 		torso.velocity.x = base.velocity.x;
 		head.velocity.x = base.velocity.x;
 	}
+
+	public function removeBall(toRemove:Snowball)
+	{
+		balls.remove(toRemove);
+		for (i => b in balls)
+		{
+			if (i == 0)
+			{
+				b.ballUnderneath = null;
+			}
+			else
+			{
+				b.ballUnderneath = balls[i - 1];
+			}
+		}
+	}
 }
 
 class Snowball extends FlxSprite
 {
-	public var idlePositionY:Float;
 	public var hitCount:Int;
-	public var isAttached(default, null):Bool;
+	public var ballUnderneath:Snowball;
+	public var isAirborne:Bool;
+
+	var tag:String;
 
 	var style:String;
 	var popVelocity:Float;
 	var gravity:Float = 700;
+	var floor:Float;
 
-	public function new(x, y, style:String = "", popVelocity:Float)
+	public function new(x, y, style:String = "", popVelocity:Float, tag:String, floor:Float)
 	{
 		super(x, y);
+		this.tag = tag;
+		isAirborne = false;
 		this.style = style;
 		this.popVelocity = popVelocity;
+		maxVelocity.y = popVelocity;
+		this.floor = floor;
 		loadGraphic('assets/images/ball$style.png');
-		idlePositionY = y;
 		hitCount = 0;
 		setSize(width * 0.3, height * 0.3);
 		centerOffsets();
@@ -210,8 +208,9 @@ class Snowball extends FlxSprite
 		});
 	}
 
-	public function collide()
+	public function surviveCollision():Bool
 	{
+		var survives = true;
 		if (!this.isFlickering())
 		{
 			this.flicker();
@@ -223,43 +222,46 @@ class Snowball extends FlxSprite
 			if (hitCount == 2)
 			{
 				this.remove();
+				survives = false;
 			}
 		}
+		return survives;
 	}
 
-	public function resetPositionY()
-	{
-		if (y > idlePositionY)
-		{
-			y = idlePositionY;
-		}
-	}
-
-	public function resetAttachment()
-	{
-		isAttached = y >= idlePositionY;
-		if (isAttached)
-		{
-			// make sure pop or jump effect is gone
-			acceleration.y = 0;
-			velocity.y = 0;
-		}
-	}
-
-	public function log()
-	{
-		trace('$style x,y $x,$y initY $idlePositionY center X = ${this.centerX()} vel ${velocity}');
-	}
+	public function log() {}
 
 	public function pop(?velocityOverride:Float)
 	{
+		isAirborne = true;
 		popVelocity = velocityOverride == null ? popVelocity : velocityOverride;
 		// get airborne
 		velocity.y = -popVelocity;
-		// prevent popping forever
-		maxVelocity.y = popVelocity;
-		// accelerate towards ground
+		// fall towards ground
 		acceleration.y = gravity;
-		isAttached = false;
+	}
+
+	public function currentBottomEdge():Float
+	{
+		return y + graphic.height;
+	}
+
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
+		var cannotBeFurtherThan = ballUnderneath == null ? floor : ballUnderneath.y;
+		var amountPastBottom = currentBottomEdge() - cannotBeFurtherThan;
+		if (amountPastBottom < 0)
+		{
+			// fall towards floor
+			acceleration.y = gravity;
+		}
+		else
+		{
+			// stop falling
+			isAirborne = false;
+			y -= amountPastBottom;
+			acceleration.y = 0;
+			velocity.y = 0;
+		}
 	}
 }
