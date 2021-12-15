@@ -96,7 +96,7 @@ class SnowBalls
 		if (isHeadAttached)
 		{
 			head.velocity.y = base.velocity.y;
-			separateHeadFromTorso();
+			resetHeadY();
 		}
 		else
 		{
@@ -106,24 +106,28 @@ class SnowBalls
 
 	inline function syncTorso()
 	{
-		// keep torso with base
-		if (isTorsoAttached)
+		if (torso.alive)
 		{
-			torso.velocity.y = base.velocity.y;
-			separateTorsoFromBase();
-		}
-		else
-		{
-			isTorsoAttached = isTorsoOnBase();
+			// keep torso with base
+			if (isTorsoAttached)
+			{
+				torso.velocity.y = base.velocity.y;
+				resetTorsoY();
+			}
+			else
+			{
+				isTorsoAttached = isTorsoOnBase();
+			}
 		}
 	}
 
-	inline function separateHeadFromTorso()
+	inline function resetHeadY()
 	{
-		head.y = torso.y - (head.graphic.height + 2);
+		var restingOnY = torso.alive ? torso.y : base.y;
+		head.y = restingOnY - (head.graphic.height + 2);
 	}
 
-	inline function separateTorsoFromBase()
+	inline function resetTorsoY()
 	{
 		torso.y = base.y - (torso.graphic.height + 2);
 	}
@@ -151,7 +155,8 @@ class SnowBalls
 	inline function isHeadOnTorso()
 	{
 		var headBottom = head.y + head.graphic.height;
-		return headBottom >= torso.y;
+		var restingOnY = torso.alive ? torso.y : base.y;
+		return headBottom >= restingOnY;
 	}
 
 	inline function isTorsoOnBase()
@@ -180,9 +185,9 @@ class SnowBalls
 	{
 		if (isPopReady)
 		{
-			if (isTorsoAttached)
+			if (torso.alive && isTorsoAttached)
 			{
-				separateTorsoFromBase();
+				resetTorsoY();
 				// get airborne
 				torso.velocity.y = -popVelocity;
 				// prevent popping forever
@@ -193,7 +198,7 @@ class SnowBalls
 			}
 			else if (isHeadAttached)
 			{
-				separateHeadFromTorso();
+				resetHeadY();
 				// get airborne
 				head.velocity.y = -popVelocity;
 				// prevent popping forever
