@@ -4,7 +4,7 @@ class Rock extends Obstacle
 
 	public function new(x, y, rockWeight)
 	{
-		super(x, y);
+		super(x, y, true);
 		weight = rockWeight + 1;
 	}
 }
@@ -13,16 +13,32 @@ class Obstacle extends FlxSprite
 {
 	public var isHit(default, null):Bool;
 
-	public function new(x, y)
+	var isPermanent:Bool;
+
+	public function new(x, y, isPermanent:Bool = false)
 	{
 		super(x, y);
 		isHit = false;
+		this.isPermanent = isPermanent;
 	}
 
 	public function collide()
 	{
-		// trace('explode');
+		if (!isHit && !isPermanent)
+		{
+			this.remove();
+		}
 		isHit = true;
+	}
+
+	function remove()
+	{
+		FlxTween.tween(this, {x: x + FlxG.random.int(1000, 2000), y: y - FlxG.random.int(-1000, 2000)}, 0.7, {
+			onComplete: tween ->
+			{
+				this.kill();
+			}
+		});
 	}
 }
 

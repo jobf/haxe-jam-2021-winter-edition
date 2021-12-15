@@ -226,6 +226,7 @@ class SnowBalls
 class Snowball extends FlxSprite
 {
 	public var groundedPosY:Float;
+	public var hitCount:Int;
 
 	var style:String;
 
@@ -235,10 +236,19 @@ class Snowball extends FlxSprite
 		this.style = style;
 		loadGraphic('assets/images/ball$style.png');
 		groundedPosY = y;
-		// reduce hitbox
-		var w = width;
+		hitCount = 0;
 		setSize(width * 0.3, height * 0.3);
 		centerOffsets();
+	}
+
+	function remove()
+	{
+		FlxTween.tween(this, {x: x - 1000}, 0.5, {
+			onComplete: tween ->
+			{
+				this.kill();
+			}
+		});
 	}
 
 	public function collide()
@@ -246,6 +256,15 @@ class Snowball extends FlxSprite
 		if (!this.isFlickering())
 		{
 			this.flicker();
+			hitCount++;
+			if (hitCount == 1)
+			{
+				this.color = FlxColor.CYAN;
+			}
+			if (hitCount == 2)
+			{
+				this.remove();
+			}
 		}
 	}
 
