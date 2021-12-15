@@ -13,6 +13,7 @@ import flixel.group.FlxSpriteGroup;
 import flixel.group.FlxSpriteGroup;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
+import flixel.ui.FlxBar;
 import flixel.util.FlxColor;
 
 using core.Delay;

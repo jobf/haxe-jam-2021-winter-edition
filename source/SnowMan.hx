@@ -215,7 +215,7 @@ class SnowBalls
 		head.log();
 	}
 
-	public function changeHorizontalSpeed(difference:Float)
+	public function increaseVelocity(difference:Float)
 	{
 		base.velocity.x += difference;
 		torso.velocity.x = base.velocity.x;

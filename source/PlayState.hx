@@ -4,6 +4,7 @@ class PlayState extends BaseState
 {
 	var snowHead:Snowball;
 	var snowBody:SnowBalls;
+	var snowTarget:FlxObject;
 	var bg:FlxBackdrop;
 	var rocks:Rocks;
 	var birds:Birds;
@@ -26,7 +27,11 @@ class PlayState extends BaseState
 		bg.screenCenter();
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
+
 		snowBody = new SnowBalls(128, FlxG.height - 200, level.maxVelocity);
+		snowTarget = new FlxObject(snowBody.torso.x, FlxG.height + 100);
+		snowTarget.maxVelocity.x = bg.maxVelocity.x;
+		add(snowTarget);
 
 		layers.entities.add(snowBody.base);
 		layers.entities.add(snowBody.torso);
@@ -54,16 +59,32 @@ class PlayState extends BaseState
 		}
 
 		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
+
+		layers.overlay.add(new HUD(level));
+	}
+
+	var humanize = 1.4;
+
+	public function getTargetDistance():Float
+	{
+		return (snowTarget.x / (level.levelLength * humanize)) * 100;
+	}
+
+	public function getActualDistance():Float
+	{
+		return ((bg.x * -1) / level.levelLength) * 100;
 	}
 
 	function checkAcceleration()
 	{
 		// update direction based on key input
 		var nextDirection = snowBody.shouldAccelerate();
+		snowTarget.velocity.x += (level.snowManVelocityIncrement);
 		if (nextDirection != 0)
 		{
+			var changeVelocityBy = level.snowManVelocityIncrement * nextDirection;
 			// only change if a direction was returned, otherwise leave at previous speed
-			snowBody.changeHorizontalSpeed(level.snowManVelocityIncrement * nextDirection);
+			snowBody.increaseVelocity(changeVelocityBy);
 			// trace('new snowBody.velocity.x ${snowBody.velocity.x}');
 		}
 		// if player is moving, back drop and other entities should be
