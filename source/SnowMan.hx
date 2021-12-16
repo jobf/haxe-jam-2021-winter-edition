@@ -36,9 +36,6 @@ class SnowBalls
 		collisionGroup.add(base);
 		collisionGroup.add(torso);
 		collisionGroup.add(head);
-		base.maxVelocity.x = maxVelocity;
-		head.maxVelocity.x = maxVelocity;
-		torso.maxVelocity.x = maxVelocity;
 		balls.push(base);
 		balls.push(torso);
 		balls.push(head);
@@ -55,25 +52,6 @@ class SnowBalls
 	{
 		jumpCoolOff.wait(elapsed);
 		popCoolOff.wait(elapsed);
-		for (i => b in balls)
-		{
-			// is resting ? set same velocity as target
-			if (!b.isAirborne)
-			{
-				// default to targeting ball at base of stack
-				var targetVelocity = balls[0].velocity.y;
-				if (i >= 1)
-				{
-					// if ball directly underneath is not attached, target that instead
-					var target = balls[i - 1];
-					if (target.isAirborne)
-					{
-						targetVelocity = target.velocity.y;
-					}
-				}
-				b.velocity.y = targetVelocity;
-			}
-		}
 	}
 
 	public inline function shouldAccelerate():Int
@@ -141,16 +119,20 @@ class SnowBalls
 
 	public function log()
 	{
-		base.log();
-		torso.log();
+		// base.log();
+		// torso.log();
 		head.log();
 	}
 
 	public function increaseVelocity(difference:Float)
 	{
-		base.velocity.x += difference;
-		torso.velocity.x = base.velocity.x;
-		head.velocity.x = base.velocity.x;
+		// set base velocity
+		balls[0].velocity.x += difference;
+		// copy to other balls
+		for (i in 1...balls.length)
+		{
+			balls[i].velocity.x = balls[0].velocity.x;
+		}
 	}
 
 	public function removeBall(toRemove:Snowball)
@@ -158,6 +140,14 @@ class SnowBalls
 		balls.remove(toRemove);
 		for (i => b in balls)
 		{
+			if (b.ballUnderneath == toRemove)
+			{
+				// that ball is gone, do nothing should have reference to it again
+				b.ballUnderneath = null;
+				// it is no longer resting, thus should be treated as airborne (for falling logic to work)
+				b.isAirborne = true;
+			}
+			// if it's the first in the stack there is only ground underneath
 			if (i == 0)
 			{
 				b.ballUnderneath = null;
@@ -228,16 +218,22 @@ class Snowball extends FlxSprite
 		return survives;
 	}
 
-	public function log() {}
+	public function log()
+	{
+		var logText = '$tag y:$y acceleration:$acceleration velocity:$velocity max velocity:$maxVelocity';
+		if (ballUnderneath != null)
+		{
+			logText += 'under is ${ballUnderneath.tag}: $ballUnderneath';
+		}
+		trace(logText);
+	}
 
 	public function pop(?velocityOverride:Float)
 	{
 		isAirborne = true;
 		popVelocity = velocityOverride == null ? popVelocity : velocityOverride;
 		// get airborne
-		velocity.y = -popVelocity;
-		// fall towards ground
-		acceleration.y = gravity;
+		velocity.y = popVelocity * -1;
 	}
 
 	public function currentBottomEdge():Float
@@ -248,20 +244,28 @@ class Snowball extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+
 		var cannotBeFurtherThan = ballUnderneath == null ? floor : ballUnderneath.y;
 		var amountPastBottom = currentBottomEdge() - cannotBeFurtherThan;
 		if (amountPastBottom < 0)
 		{
-			// fall towards floor
+			// fall towards floor by default
 			acceleration.y = gravity;
+
+			// if resting on a ball, track that
+			if (ballUnderneath != null && !isAirborne)
+			{
+				velocity.y = ballUnderneath.velocity.y;
+				acceleration.y = ballUnderneath.acceleration.y;
+			}
 		}
 		else
 		{
 			// stop falling
 			isAirborne = false;
-			y -= amountPastBottom;
 			acceleration.y = 0;
 			velocity.y = 0;
+			y -= amountPastBottom;
 		}
 	}
 }
