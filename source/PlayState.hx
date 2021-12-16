@@ -18,13 +18,12 @@ class PlayState extends BaseState
 	var midObstaclesY:Int;
 	var highObstaclesY:Int;
 	var hasReachedDistance:Bool;
+	var isPlayInProgress:Bool = false;
 
 	override public function create()
 	{
 		super.create();
 		FlxG.debugger.drawDebug = true;
-		// FlxG.debugger.visible = true;
-		// FlxG.debugger.
 		hasReachedDistance = false;
 		bgColor = FlxColor.WHITE;
 		level = Data.level;
@@ -75,9 +74,39 @@ class PlayState extends BaseState
 		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
 
 		layers.overlay.add(new HUD(level));
+
+		startIntro();
 	}
 
 	var humanize = 1.4;
+
+	function startIntro()
+	{
+		var texts = [for (s in ["GET", "READY", "GO !!",]) glyphs.getText(s)];
+		var duration = 1;
+		for (i => t in texts)
+		{
+			t.screenCenter();
+			var endX = t.x;
+			t.x = -1000;
+			layers.overlay.add(t);
+			var tween = FlxTween.tween(t, {x: endX}, duration);
+			tween.onComplete = (_) ->
+			{
+				FlxTween.tween(t, {y: 1000}, 1, {
+					onComplete: (c) ->
+					{
+						t.kill();
+						if (i == texts.length - 1)
+						{
+							isPlayInProgress = true;
+						}
+					}
+				});
+			}
+			duration += 1;
+		}
+	}
 
 	public function getTargetDistance():Float
 	{
@@ -148,26 +177,29 @@ class PlayState extends BaseState
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
-		snowBody.update(elapsed);
-		hasReachedDistance = bg.x * -1 > level.levelLength;
-		if (hasReachedDistance)
+		if (isPlayInProgress)
 		{
-			progressToNextLevel();
-		}
-		if (FlxG.keys.justPressed.UP)
-		{
-			snowBody.jump();
-		}
-		if (FlxG.keys.justPressed.DOWN)
-		{
-			snowBody.pop();
-		}
-		handleCollisions();
-		accelerationDelay.wait(elapsed);
+			snowBody.update(elapsed);
+			hasReachedDistance = bg.x * -1 > level.levelLength;
+			if (hasReachedDistance)
+			{
+				progressToNextLevel();
+			}
+			if (FlxG.keys.justPressed.UP)
+			{
+				snowBody.jump();
+			}
+			if (FlxG.keys.justPressed.DOWN)
+			{
+				snowBody.pop();
+			}
+			handleCollisions();
+			accelerationDelay.wait(elapsed);
 
-		rocksDelay.wait(bg.x * -1);
-		birdsDelay.wait(bg.x * -1);
-		pointsDelay.wait(bg.x * -1);
+			rocksDelay.wait(bg.x * -1);
+			birdsDelay.wait(bg.x * -1);
+			pointsDelay.wait(bg.x * -1);
+		}
 
 		if (FlxG.keys.justReleased.B)
 		{
