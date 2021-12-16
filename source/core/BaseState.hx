@@ -3,6 +3,7 @@ package core;
 class BaseState extends FlxState
 {
 	var layers:Layers;
+	var glyphs:Glyphs;
 
 	public static var delays = new DelayFactory();
 
@@ -16,6 +17,8 @@ class BaseState extends FlxState
 		super.create();
 		layers = new Layers();
 		add(layers);
+		glyphs = new Glyphs("assets/fonts/ice-and-snow-104.png",
+			" !#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~§¶—•∙", 104);
 	}
 
 	override public function update(elapsed:Float)
