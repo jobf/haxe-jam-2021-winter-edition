@@ -6,8 +6,8 @@ class PlayState extends BaseState
 	var snowBody:SnowBalls;
 	var snowTarget:FlxObject;
 	var bg:FlxBackdrop;
-	var rocks:Rocks;
-	var birds:Birds;
+	var rocks:ObstaclesGround;
+	var birds:ObstaclesAir;
 	var rocksDelay:DelayDistance;
 	var birdsDelay:DelayDistance;
 	var accelerationDelay:Delay;
@@ -40,7 +40,7 @@ class PlayState extends BaseState
 		lowObstaclesY = Std.int(snowBody.base.y + (snowBody.base.height - 10));
 		midObstaclesY = Std.int(snowBody.torso.y - 35);
 
-		rocks = new Rocks();
+		rocks = new ObstaclesGround();
 		rocksDelay = {
 			stepTravelled: 500, // new rock every x pixels
 			lastTravelled: 0,
@@ -49,7 +49,7 @@ class PlayState extends BaseState
 			onReady: spawnRock
 		}
 
-		birds = new Birds();
+		birds = new ObstaclesAir();
 		birdsDelay = {
 			stepTravelled: 1000, // new bird every x pixels
 			lastTravelled: 0,
@@ -85,7 +85,6 @@ class PlayState extends BaseState
 			var changeVelocityBy = level.snowManVelocityIncrement * nextDirection;
 			// only change if a direction was returned, otherwise leave at previous speed
 			snowBody.increaseVelocity(changeVelocityBy);
-			// trace('new snowBody.velocity.x ${snowBody.velocity.x}');
 		}
 		// if player is moving, back drop and other entities should be
 		if (snowBody.base.velocity.x > 0)
@@ -167,20 +166,13 @@ class PlayState extends BaseState
 
 	function spawnRock()
 	{
-		var rockWeight = FlxG.random.int(0, 2);
-
-		var rock = rocks.getRock(FlxG.width, lowObstaclesY, rockWeight);
-		// trace('rock x,y ${rock.x},${rock.y}');
-
-		// rock.velocity.x = bg.velocity.x;
+		var rock = rocks.get(FlxG.width, lowObstaclesY);
 		layers.bg.add(rock);
 	}
 
 	function spawnBird()
 	{
 		var bird = birds.get(FlxG.width, midObstaclesY);
-		// trace('rock x,y ${rock.x},${rock.y}');
-
 		layers.foreground.add(bird);
 	}
 
@@ -190,9 +182,10 @@ class PlayState extends BaseState
 		{
 			if (!rock.isHit)
 			{
-				var bump = switch (rock.weight)
+				var bump = switch (rock.key)
 				{
-					case _: rock.weight * 100;
+					case 0: -1;
+					case _: rock.key * 100;
 				};
 				rock.collide();
 				snowBody.jump(bump);

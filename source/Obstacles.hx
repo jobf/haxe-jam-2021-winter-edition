@@ -1,25 +1,25 @@
 class Rock extends Obstacle
 {
-	public var weight(default, null):Int;
-
-	public function new(x, y, rockWeight)
+	public function new(x, y, key = 1, isPermanent:Bool = true)
 	{
-		super(x, y, true);
-		weight = rockWeight + 1;
+		super(x, y, key, isPermanent);
 	}
 }
 
 class Obstacle extends FlxSprite
 {
 	public var isHit(default, null):Bool;
+	public var key(default, null):Int;
 
 	var isPermanent:Bool;
 
-	public function new(x, y, isPermanent:Bool = false)
+	public function new(x, y, key:Int, isPermanent:Bool = false)
 	{
 		super(x, y);
-		isHit = false;
+		this.key = key;
+		animation.frameIndex = key;
 		this.isPermanent = isPermanent;
+		isHit = false;
 	}
 
 	public function collide()
@@ -42,47 +42,57 @@ class Obstacle extends FlxSprite
 	}
 }
 
-class Rocks
+class ObstaclesGround extends ObstacleGenerator<Rock>
 {
-	public var collisionGroup(default, null):FlxTypedGroup<Rock>;
-
-	var framesHelper:FramesHelper;
-
 	public function new()
 	{
-		collisionGroup = new FlxTypedGroup<Rock>();
-		framesHelper = new FramesHelper("assets/images/rocks.png", 40, 3, 1);
-	}
-
-	public function getRock(x:Int, y:Int, weight:Int = 0):Rock
-	{
-		var rock = new Rock(x, y, weight);
-		collisionGroup.add(rock);
-		rock.frames = framesHelper.getFrames();
-		rock.animation.frameIndex = weight;
-		return rock;
+		super(new FramesHelper("assets/images/obstacles-ground-192x4.png", 192, 4, 1), (x, y) ->
+		{
+			var key = FlxG.random.int(0, 3);
+			var obstacle = new Rock(x, y, key);
+			collisionGroup.add(obstacle);
+			obstacle.frames = asset.getFrames();
+			obstacle.animation.frameIndex = key;
+			return obstacle;
+		});
 	}
 }
 
-class Birds
+class ObstaclesAir extends ObstacleGenerator<Obstacle>
 {
-	public var collisionGroup(default, null):FlxTypedGroup<Obstacle>;
-
-	var framesHelper:FramesHelper;
-
 	public function new()
 	{
-		collisionGroup = new FlxTypedGroup<Obstacle>();
-		framesHelper = new FramesHelper("assets/images/bird.png", 106, 1, 1, 81);
+		super(new FramesHelper("assets/images/obstacles-air-256x2.png", 256, 2, 1), (x, y) ->
+		{
+			var key = FlxG.random.int(0, 1);
+			var obstacle = new Obstacle(x, y, key);
+			collisionGroup.add(obstacle);
+			obstacle.frames = asset.getFrames();
+			obstacle.setSize(35, 25);
+			obstacle.centerOffsets();
+			return obstacle;
+		});
+	}
+}
+
+class ObstacleGenerator<T:Obstacle>
+{
+	public var collisionGroup(default, null):FlxTypedGroup<T>;
+
+	var asset:FramesHelper;
+	var generate:(Int, Int) -> T;
+
+	public function new(asset:FramesHelper, generate:(Int, Int) -> T)
+	{
+		collisionGroup = new FlxTypedGroup<T>();
+		this.asset = asset;
+		this.generate = generate;
 	}
 
-	public function get(x:Int, y:Int):Obstacle
+	public function get(x:Int, y:Int):T
 	{
-		var bird = new Obstacle(x, y);
-		collisionGroup.add(bird);
-		bird.frames = framesHelper.getFrames();
-		bird.setSize(35, 25);
-		bird.centerOffsets();
-		return bird;
+		var obstacle = generate(x, y);
+		collisionGroup.add(obstacle);
+		return obstacle;
 	}
 }
