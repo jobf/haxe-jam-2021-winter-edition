@@ -8,8 +8,10 @@ class PlayState extends BaseState
 	var bg:FlxBackdrop;
 	var rocks:ObstaclesGround;
 	var birds:ObstaclesAir;
+	var points:Collectibles;
 	var rocksDelay:DelayDistance;
 	var birdsDelay:DelayDistance;
+	var pointsDelay:DelayDistance;
 	var accelerationDelay:Delay;
 	var level:LevelStats;
 	var lowObstaclesY:Int;
@@ -20,6 +22,9 @@ class PlayState extends BaseState
 	override public function create()
 	{
 		super.create();
+		FlxG.debugger.drawDebug = true;
+		// FlxG.debugger.visible = true;
+		// FlxG.debugger.
 		hasReachedDistance = false;
 		bgColor = FlxColor.WHITE;
 		level = Data.level;
@@ -56,6 +61,15 @@ class PlayState extends BaseState
 			isInProgress: true,
 			isResetAuto: true,
 			onReady: spawnBird
+		}
+
+		points = new Collectibles();
+		pointsDelay = {
+			stepTravelled: 400, // new bird every x pixels
+			lastTravelled: 0,
+			isInProgress: true,
+			isResetAuto: true,
+			onReady: spawnPoints
 		}
 
 		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
@@ -115,6 +129,19 @@ class PlayState extends BaseState
 					b.velocity.x = bg.velocity.x * 1.2;
 				}
 			});
+
+			points.collisionGroup.forEachAlive((p) ->
+			{
+				if (p.x < -25)
+				{
+					p.kill();
+					p.visible = false;
+				}
+				else
+				{
+					p.velocity.x = bg.velocity.x * 1.2;
+				}
+			});
 		}
 	}
 
@@ -137,9 +164,12 @@ class PlayState extends BaseState
 		}
 		handleCollisions();
 		accelerationDelay.wait(elapsed);
+
 		rocksDelay.wait(bg.x * -1);
 		birdsDelay.wait(bg.x * -1);
-		if (FlxG.keys.justReleased.T)
+		pointsDelay.wait(bg.x * -1);
+
+		if (FlxG.keys.justReleased.B)
 		{
 			@:privateAccess
 			var b = snowBody.balls[0];
@@ -147,9 +177,17 @@ class PlayState extends BaseState
 			b.remove();
 			snowBody.removeBall(b);
 		}
+		if (FlxG.keys.justReleased.T)
+		{
+			@:privateAccess
+			var b = snowBody.balls[1];
+			@:privateAccess
+			b.remove();
+			snowBody.removeBall(b);
+		}
 		if (FlxG.keys.justPressed.L)
 		{
-			trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity} bg pos ${bg.x}, ${bg.y}\n\n\n');
+			// trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity} bg pos ${bg.x}, ${bg.y}\n\n\n');
 
 			snowBody.log();
 		}
@@ -174,6 +212,12 @@ class PlayState extends BaseState
 	{
 		var bird = birds.get(FlxG.width, midObstaclesY);
 		layers.foreground.add(bird);
+	}
+
+	function spawnPoints()
+	{
+		var points = points.get(FlxG.width, midObstaclesY);
+		layers.foreground.add(points);
 	}
 
 	inline function handleCollisions()
@@ -201,6 +245,14 @@ class PlayState extends BaseState
 				{
 					snowBody.removeBall(snow);
 				};
+			}
+		});
+
+		FlxG.overlap(snowBody.collisionGroup, points.collisionGroup, (snow:Snowball, points:Collectible) ->
+		{
+			if (!points.isHit)
+			{
+				points.collide();
 			}
 		});
 	}
