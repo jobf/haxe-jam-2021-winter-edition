@@ -16,6 +16,12 @@ class HUD extends FlxSpriteGroup
 			return state.getActualDistance();
 		});
 		add(progressMeter);
+
+		slowMoMeter = new CallbackFlxBar(margin, margin * 9, LEFT_TO_RIGHT, barWidth, barHeight, () ->
+		{
+			return state.getSlowMoDelayLevel();
+		});
+		add(slowMoMeter);
 	}
 
 	override function update(elapsed:Float)
@@ -28,4 +34,6 @@ class HUD extends FlxSpriteGroup
 	var targetMeter:FlxBar;
 
 	var progressMeter:FlxBar;
+
+	var slowMoMeter:CallbackFlxBar;
 }

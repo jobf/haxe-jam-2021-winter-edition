@@ -76,6 +76,11 @@ class Obstacle extends FlxSprite
 		#if debug
 		drawDebug();
 		#end
+		if (x < (width * 2) * -1)
+		{
+			kill();
+			visible = false;
+		}
 	}
 }
 

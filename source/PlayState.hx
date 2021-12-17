@@ -13,12 +13,15 @@ class PlayState extends BaseState
 	var birdsDelay:DelayDistance;
 	var pointsDelay:DelayDistance;
 	var accelerationDelay:Delay;
+	var slowMoDelay:Delay;
 	var level:LevelStats;
 	var lowObstaclesY:Int;
 	var midObstaclesY:Int;
 	var highObstaclesY:Int;
 	var hasReachedDistance:Bool;
 	var isPlayInProgress:Bool = false;
+	var isSlowMotion:Bool = false;
+	var slowMoFactor:Float = 0.9;
 
 	override public function create()
 	{
@@ -71,8 +74,8 @@ class PlayState extends BaseState
 			onReady: spawnPoints
 		}
 
-		accelerationDelay = BaseState.delays.Default(0.06, checkAcceleration, true, true);
-
+		accelerationDelay = BaseState.delays.Default(0.06, handleMovement, true, true);
+		slowMoDelay = BaseState.delays.Default(1.0, resetSlowMo, false, false);
 		layers.overlay.add(new HUD(level));
 
 		startIntro();
@@ -118,60 +121,65 @@ class PlayState extends BaseState
 		return ((bg.x * -1) / level.levelLength) * 100;
 	}
 
-	function checkAcceleration()
+	public function getSlowMoDelayLevel():Float
+	{
+		return (slowMoDelay.currentTime / slowMoDelay.duration) * 100;
+	}
+
+	inline function shouldAccelerate():Int
+	{
+		var accelerationChanged = 0;
+
+		if (FlxG.keys.pressed.RIGHT)
+		{
+			accelerationChanged = 1;
+		}
+		if (FlxG.keys.pressed.LEFT)
+		{
+			accelerationChanged = -1;
+		}
+
+		return accelerationChanged;
+	}
+
+	function handleMovement()
 	{
 		// update direction based on key input
-		var nextDirection = snowBody.shouldAccelerate();
+		var nextDirection = shouldAccelerate();
+
+		// always speed up target, we are racing it
 		snowTarget.velocity.x += (level.snowManVelocityIncrement);
-		if (nextDirection != 0)
+
+		if (!isSlowMotion && nextDirection > 0)
 		{
 			var changeVelocityBy = level.snowManVelocityIncrement * nextDirection;
-			// only change if a direction was returned, otherwise leave at previous speed
-			snowBody.increaseVelocity(changeVelocityBy);
+			snowBody.changeVelocityBy(changeVelocityBy);
 		}
+
 		// if player is moving, back drop and other entities should be
 		if (snowBody.base.velocity.x > 0)
 		{
 			bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
 			rocks.collisionGroup.forEachAlive((r) ->
 			{
-				if (r.x < -25)
-				{
-					r.kill();
-					r.visible = false;
-				}
-				else
-				{
-					r.velocity.x = bg.velocity.x;
-				}
+				r.velocity.x = bg.velocity.x;
 			});
-
 			birds.collisionGroup.forEachAlive((b) ->
 			{
-				if (b.x < -25)
-				{
-					b.kill();
-					b.visible = false;
-				}
-				else
-				{
-					b.velocity.x = bg.velocity.x * 1.2;
-				}
+				b.velocity.x = bg.velocity.x * 1.2;
 			});
 
 			points.collisionGroup.forEachAlive((p) ->
 			{
-				if (p.x < -25)
-				{
-					p.kill();
-					p.visible = false;
-				}
-				else
-				{
-					p.velocity.x = bg.velocity.x * 1.2;
-				}
+				p.velocity.x = bg.velocity.x * 1.2;
 			});
 		}
+	}
+
+	function resetSlowMo()
+	{
+		isSlowMotion = false;
+		snowBody.restoreCachedSpeed();
 	}
 
 	override public function update(elapsed:Float)
@@ -179,6 +187,25 @@ class PlayState extends BaseState
 		super.update(elapsed);
 		if (isPlayInProgress)
 		{
+			if (FlxG.keys.justPressed.LEFT && !isSlowMotion)
+			{
+				snowBody.cacheSpeed();
+				isSlowMotion = true;
+				slowMoDelay.start();
+				var currentVel = snowBody.base.velocity.x;
+				var reduceVelBy = snowBody.base.velocity.x * slowMoFactor;
+				snowBody.changeVelocityBy(reduceVelBy * -1);
+				bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
+				trace('slow mo start');
+			}
+			if (FlxG.keys.justReleased.LEFT && isSlowMotion)
+			{
+				trace('slow mo stop');
+				snowBody.restoreCachedSpeed();
+				isSlowMotion = false;
+				slowMoDelay.stop();
+				// snowBody.changeVelocityBy(snowBody.base.velocity.x - snowBody.base.velocity.x * slowMoFactor);
+			}
 			snowBody.update(elapsed);
 			hasReachedDistance = bg.x * -1 > level.levelLength;
 			if (hasReachedDistance)
@@ -195,7 +222,7 @@ class PlayState extends BaseState
 			}
 			handleCollisions();
 			accelerationDelay.wait(elapsed);
-
+			slowMoDelay.wait(elapsed);
 			rocksDelay.wait(bg.x * -1);
 			birdsDelay.wait(bg.x * -1);
 			pointsDelay.wait(bg.x * -1);

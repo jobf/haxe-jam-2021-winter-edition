@@ -55,6 +55,12 @@ class DelayExtensions
 		}
 	}
 
+	static public function stop(d:Delay)
+	{
+		d.isInProgress = false;
+		d.currentTime = 0;
+	}
+
 	static public function start(d:Delay)
 	{
 		d.isInProgress = true;

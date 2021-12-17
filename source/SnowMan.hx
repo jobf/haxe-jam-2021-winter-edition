@@ -12,9 +12,16 @@ class SnowBalls
 {
 	public var head(default, null):Snowball;
 	public var torso(default, null):Snowball;
-	public var base(default, null):Snowball;
+	public var base(get, null):Snowball;
 	public var collisionGroup(default, null):FlxTypedGroup<Snowball>;
 	public var accelerationFactor:Float = 5;
+
+	function get_base():Snowball
+	{
+		if (balls.length < 1)
+			return null;
+		return balls[0];
+	}
 
 	var jumpCoolOff:Delay;
 	var isJumpReady:Bool;
@@ -28,7 +35,7 @@ class SnowBalls
 	{
 		collisionGroup = new FlxTypedGroup<Snowball>();
 		var floor = y + 192;
-		base = new Snowball(x, y, "Large", popVelocity, "base", floor);
+		var base = new Snowball(x, y, "Large", popVelocity, "base", floor);
 		torso = new Snowball(x, y - 48, "Mid", popVelocity, "torso", floor);
 		head = new Snowball(x, torso.y - 38, "Small", popVelocity, "head", floor);
 		torso.ballUnderneath = base;
@@ -52,22 +59,6 @@ class SnowBalls
 	{
 		jumpCoolOff.wait(elapsed);
 		popCoolOff.wait(elapsed);
-	}
-
-	public inline function shouldAccelerate():Int
-	{
-		var accelerationChanged = 0;
-
-		if (FlxG.keys.pressed.RIGHT)
-		{
-			accelerationChanged = 1;
-		}
-		if (FlxG.keys.pressed.LEFT)
-		{
-			accelerationChanged = -1;
-		}
-
-		return accelerationChanged;
 	}
 
 	function setJumpIsReady()
@@ -124,7 +115,7 @@ class SnowBalls
 		head.log();
 	}
 
-	public function increaseVelocity(difference:Float)
+	public function changeVelocityBy(difference:Float)
 	{
 		// set base velocity
 		balls[0].velocity.x += difference;
@@ -156,6 +147,22 @@ class SnowBalls
 			{
 				b.ballUnderneath = balls[i - 1];
 			}
+		}
+	}
+
+	public function cacheSpeed()
+	{
+		for (b in balls)
+		{
+			b.cacheSpeed();
+		}
+	}
+
+	public function restoreCachedSpeed()
+	{
+		for (b in balls)
+		{
+			b.restoreCachedSpeed();
 		}
 	}
 }
@@ -268,4 +275,21 @@ class Snowball extends FlxSprite
 			y -= amountPastBottom;
 		}
 	}
+
+	public function cacheSpeed()
+	{
+		velocity.copyTo(cacheVelocity);
+		acceleration.copyTo(cacheAcceleration);
+		trace('$tag cached v $cacheVelocity a $cacheAcceleration');
+	}
+
+	public function restoreCachedSpeed()
+	{
+		cacheVelocity.copyTo(velocity);
+		cacheAcceleration.copyTo(acceleration);
+	}
+
+	var cacheVelocity:FlxPoint = FlxPoint.get();
+
+	var cacheAcceleration:FlxPoint = FlxPoint.get();
 }
