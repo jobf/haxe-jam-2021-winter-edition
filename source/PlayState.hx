@@ -35,17 +35,14 @@ class PlayState extends BaseState
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
 
-		snowBody = new SnowBalls(128, FlxG.height - 200, level.maxVelocity);
-		snowTarget = new FlxObject(snowBody.torso.x, FlxG.height + 100);
+		snowBody = new SnowBalls(128, FlxG.height - 86 * 3, level.maxVelocity);
+		snowTarget = new FlxObject(snowBody.base.x, FlxG.height + 100);
 		snowTarget.maxVelocity.x = bg.maxVelocity.x;
 		add(snowTarget);
-
-		layers.entities.add(snowBody.base);
-		layers.entities.add(snowBody.torso);
-		layers.entities.add(snowBody.head);
+		snowBody.addBallsTo(layers.entities);
 
 		lowObstaclesY = Std.int(snowBody.base.y + (snowBody.base.height - 10));
-		midObstaclesY = Std.int(snowBody.torso.y - 35);
+		midObstaclesY = lowObstaclesY - 100; // Std.int(snowBody.torso.y - 35);
 
 		rocks = new ObstaclesGround();
 		rocksDelay = {

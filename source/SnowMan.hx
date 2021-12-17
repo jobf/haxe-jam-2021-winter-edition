@@ -8,10 +8,18 @@ typedef LevelStats =
 	var levelLength:Float;
 }
 
+typedef Dimensions =
+{
+	var heightV:Int;
+	var widthV:Int;
+	var heightC:Int;
+	var widthC:Int;
+};
+
 class SnowBalls
 {
-	public var head(default, null):Snowball;
-	public var torso(default, null):Snowball;
+	// public var head(default, null):Snowball;
+	// public var torso(default, null):Snowball;
 	public var base(get, null):Snowball;
 	public var collisionGroup(default, null):FlxTypedGroup<Snowball>;
 	public var accelerationFactor:Float = 5;
@@ -24,35 +32,63 @@ class SnowBalls
 	}
 
 	var jumpCoolOff:Delay;
-	var isJumpReady:Bool;
+	var isJumpReady:Bool = true;
 	var popCoolOff:Delay;
-	var isPopReady:Bool;
+	var isPopReady:Bool = true;
 	var popVelocity:Float = 350;
 	var gravity:Float = 700;
 	var balls:Array<Snowball> = [];
+	var asset:FramesHelper;
 
 	public function new(x, y, maxVelocity)
 	{
 		collisionGroup = new FlxTypedGroup<Snowball>();
-		var floor = y + 192;
-		var base = new Snowball(x, y, "Large", popVelocity, "base", floor);
-		torso = new Snowball(x, y - 48, "Mid", popVelocity, "torso", floor);
-		head = new Snowball(x, torso.y - 38, "Small", popVelocity, "head", floor);
-		torso.ballUnderneath = base;
-		head.ballUnderneath = torso;
+		asset = new FramesHelper("assets/images/snow-100x100-4x4.png", 100, 4, 4);
+
+		var ballDimensions:Array<Dimensions> = [
+			{
+				widthC: 20,
+				heightC: 20,
+				widthV: 40,
+				heightV: 40
+			},
+			{
+				widthC: 22,
+				heightC: 22,
+				widthV: 52,
+				heightV: 52
+			},
+			{
+				widthC: 30,
+				heightC: 32,
+				widthV: 74,
+				heightV: 74
+			}
+		];
+
+		var totalHeight = 0;
+		for (d in ballDimensions)
+		{
+			totalHeight += d.heightV;
+		}
+		var floor = y + totalHeight;
+
+		var base = new Snowball(x, floor - ballDimensions[2].heightV, popVelocity, "base", floor, asset.getFrames(), ballDimensions[2]);
 		collisionGroup.add(base);
-		collisionGroup.add(torso);
-		collisionGroup.add(head);
 		balls.push(base);
+
+		var torso = new Snowball(x, base.y - ballDimensions[1].heightV, popVelocity, "torso", floor, asset.getFrames(), ballDimensions[1]);
+		torso.ballUnderneath = base;
+		collisionGroup.add(torso);
 		balls.push(torso);
+
+		var head = new Snowball(x, torso.y - ballDimensions[0].heightV, popVelocity, "head", floor, asset.getFrames(), ballDimensions[0]);
+		head.ballUnderneath = torso;
+		collisionGroup.add(head);
 		balls.push(head);
-		base.moveMiddleX(x);
-		torso.moveMiddleX(x);
-		head.moveMiddleX(x);
+
 		jumpCoolOff = BaseState.delays.Default(0.2, setJumpIsReady, true);
-		isJumpReady = true;
 		popCoolOff = BaseState.delays.Default(0.2, setPopIsReady, true);
-		isPopReady = true;
 	}
 
 	public function update(elapsed:Float)
@@ -67,11 +103,6 @@ class SnowBalls
 	}
 
 	function setPopIsReady()
-	{
-		isPopReady = true;
-	}
-
-	function gen()
 	{
 		isPopReady = true;
 	}
@@ -112,7 +143,7 @@ class SnowBalls
 	{
 		// base.log();
 		// torso.log();
-		head.log();
+		// head.log();
 	}
 
 	public function changeVelocityBy(difference:Float)
@@ -165,33 +196,54 @@ class SnowBalls
 			b.restoreCachedSpeed();
 		}
 	}
+
+	public function addBallsTo(group:FlxSpriteGroup)
+	{
+		for (b in balls)
+		{
+			group.add(b);
+		}
+	}
 }
 
 class Snowball extends FlxSprite
 {
 	public var hitCount:Int;
+
+	var maxHits:Int = 3;
+
 	public var ballUnderneath:Snowball;
 	public var isAirborne:Bool;
 
 	var tag:String;
-
-	var style:String;
 	var popVelocity:Float;
 	var gravity:Float = 700;
 	var floor:Float;
+	var cacheVelocity:FlxPoint = FlxPoint.get();
+	var cacheAcceleration:FlxPoint = FlxPoint.get();
+	var minimumFrameIndex:Int;
+	var dimensions:Dimensions;
 
-	public function new(x, y, style:String = "", popVelocity:Float, tag:String, floor:Float)
+	public function new(x, y, popVelocity:Float, tag:String, floor:Float, frames:FlxTileFrames, dimensions:Dimensions)
 	{
 		super(x, y);
+		this.dimensions = dimensions;
+		trace('$tag created - y:$y x:$x (floor:$floor)');
 		this.tag = tag;
 		isAirborne = false;
-		this.style = style;
 		this.popVelocity = popVelocity;
 		maxVelocity.y = popVelocity;
 		this.floor = floor;
-		loadGraphic('assets/images/ball$style.png');
+		this.frames = frames;
+		minimumFrameIndex = switch (tag)
+		{
+			case "torso": 4;
+			case "base": 8;
+			case _: 0;
+		}
+		syncFrameWithHealth();
 		hitCount = 0;
-		setSize(width * 0.3, height * 0.3);
+		setSize(dimensions.heightC, dimensions.widthC);
 		centerOffsets();
 	}
 
@@ -212,6 +264,7 @@ class Snowball extends FlxSprite
 		{
 			this.flicker();
 			hitCount++;
+			syncFrameWithHealth();
 			if (hitCount == 1)
 			{
 				this.color = FlxColor.CYAN;
@@ -243,9 +296,11 @@ class Snowball extends FlxSprite
 		velocity.y = popVelocity * -1;
 	}
 
+	var spriteHeight = 60;
+
 	public function currentBottomEdge():Float
 	{
-		return y + graphic.height;
+		return y + dimensions.heightV;
 	}
 
 	override function update(elapsed:Float)
@@ -289,7 +344,8 @@ class Snowball extends FlxSprite
 		cacheAcceleration.copyTo(acceleration);
 	}
 
-	var cacheVelocity:FlxPoint = FlxPoint.get();
-
-	var cacheAcceleration:FlxPoint = FlxPoint.get();
+	function syncFrameWithHealth()
+	{
+		animation.frameIndex = minimumFrameIndex + (maxHits - hitCount);
+	}
 }

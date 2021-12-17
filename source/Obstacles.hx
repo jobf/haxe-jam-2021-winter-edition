@@ -88,7 +88,7 @@ class ObstaclesGround extends ObstacleGenerator<Rock>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/obstacles-ground-192x4.png", 192, 4, 1), (x, y) ->
+		super(new FramesHelper("assets/images/ground-200x100-4x2.png", 200, 4, 2, 100), (x, y) ->
 		{
 			var key = FlxG.random.int(0, 3);
 			var obstacle = new Rock(x, y, key, asset.getFrames());
@@ -105,7 +105,7 @@ class ObstaclesAir extends ObstacleGenerator<Obstacle>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/obstacles-air-256x2.png", 256, 2, 1), (x, y) ->
+		super(new FramesHelper("assets/images/air-200x100-2x1.png", 200, 2, 1, 100), (x, y) ->
 		{
 			var key = FlxG.random.int(0, 1);
 			var obstacle = new Obstacle(x, y, key, asset.getFrames());
@@ -121,7 +121,7 @@ class Collectibles extends ObstacleGenerator<Collectible>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/obstacles-collectible-128x1.png", 128, 1, 3), (x, y) ->
+		super(new FramesHelper("assets/images/points-50x50-3x2.png", 50, 3, 2), (x, y) ->
 		{
 			var key = FlxG.random.int(0, 2);
 			var obstacle = new Collectible(x, y, key, asset.getFrames());
