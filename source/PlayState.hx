@@ -30,8 +30,8 @@ class PlayState extends BaseState
 		hasReachedDistance = false;
 		bgColor = FlxColor.WHITE;
 		level = Data.level;
-		bg = new FlxBackdrop("assets/images/bg.png");
-		bg.screenCenter();
+		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
+		// bg.screenCenter();
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
 

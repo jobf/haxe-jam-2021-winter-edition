@@ -20,8 +20,7 @@ class Test extends BaseState
 		super.create();
 		FlxG.debugger.drawDebug = true;
 		bgColor = FlxColor.WHITE;
-		bg = new FlxBackdrop("assets/images/bg.png");
-		bg.screenCenter();
+		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
 		layers.bg.add(bg);
 
 		snowBody = new SnowBalls(24, FlxG.height - 86 * 3, Data.level.maxVelocity);
