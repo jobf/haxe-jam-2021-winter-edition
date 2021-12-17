@@ -1,11 +1,3 @@
-typedef CollisionBox =
-{
-	var w:Int;
-	var h:Int;
-	var x:Int;
-	var y:Int;
-};
-
 class Rock extends Obstacle
 {
 	public function new(x, y, key = 1, frames:FlxTileFrames, isPermanent:Bool = true)
@@ -34,6 +26,9 @@ class Obstacle extends FlxSprite
 	public var key(default, null):Int;
 
 	var isPermanent:Bool;
+	var blinkFrameIndex:Int;
+	var blinkedFor:Float = 0;
+	var blinkDuration:Float = 1.05;
 
 	public function new(x, y, key:Int, frames:FlxTileFrames, isPermanent:Bool = false)
 	{
@@ -41,6 +36,7 @@ class Obstacle extends FlxSprite
 		this.key = key;
 		this.frames = frames;
 		animation.frameIndex = key;
+		blinkFrameIndex = key + frames.numCols;
 		this.isPermanent = isPermanent;
 		isHit = false;
 		#if debug
@@ -81,6 +77,24 @@ class Obstacle extends FlxSprite
 			kill();
 			visible = false;
 		}
+		if (animation.frameIndex != blinkFrameIndex && blinkedFor == 0)
+		{
+			var blinkChance = FlxG.random.int(0, 1000);
+			if (blinkChance > 990)
+			{
+				blinkedFor += elapsed;
+				animation.frameIndex = blinkFrameIndex;
+			}
+		}
+		else if (animation.frameIndex == blinkFrameIndex)
+		{
+			blinkedFor += elapsed;
+			if (blinkedFor >= blinkDuration)
+			{
+				blinkedFor = 0;
+				animation.frameIndex = key;
+			}
+		}
 	}
 }
 
@@ -88,9 +102,39 @@ class ObstaclesGround extends ObstacleGenerator<Rock>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/ground-200x100-4x2.png", 200, 4, 2, 100), (x, y) ->
+		var dimensionsMap:Map<Int, Dimensions> = [
+			0 => {
+				heightV: 13,
+				widthV: 30,
+				heightC: 7,
+				widthC: 7
+			},
+			1 => {
+				heightV: 28,
+				widthV: 110,
+				heightC: 10,
+				widthC: 60
+			},
+			2 => {
+				heightV: 72,
+				widthV: 196,
+				heightC: 20,
+				widthC: 100
+			},
+			3 => {
+				heightV: 95,
+				widthV: 135,
+				heightC: 40,
+				widthC: 70
+			}
+		];
+		super(new FramesHelper("assets/images/ground-200x100-4x2.png", 200, 4, 2, 100), dimensionsMap, (x, y, key) ->
 		{
-			var key = FlxG.random.int(0, 3);
+			if (key < 0)
+			{
+				trace('random rock');
+				key = FlxG.random.int(0, 3);
+			}
 			var obstacle = new Rock(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
 			obstacle.animation.frameIndex = key;
@@ -105,9 +149,26 @@ class ObstaclesAir extends ObstacleGenerator<Obstacle>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/air-200x100-2x1.png", 200, 2, 1, 100), (x, y) ->
+		var dimensionsMap:Map<Int, Dimensions> = [
+			0 => {
+				heightV: 30,
+				widthV: 56,
+				heightC: 15,
+				widthC: 25
+			},
+			1 => {
+				heightV: 68,
+				widthV: 180,
+				heightC: 4,
+				widthC: 120
+			}
+		];
+		super(new FramesHelper("assets/images/air-200x100-2x1.png", 200, 2, 1, 100), dimensionsMap, (x, y, key) ->
 		{
-			var key = FlxG.random.int(0, 1);
+			if (key < 0)
+			{
+				key = FlxG.random.int(0, 1);
+			}
 			var obstacle = new Obstacle(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
 			obstacle.setSize(35, 25);
@@ -121,9 +182,32 @@ class Collectibles extends ObstacleGenerator<Collectible>
 {
 	public function new()
 	{
-		super(new FramesHelper("assets/images/points-50x50-3x2.png", 50, 3, 2), (x, y) ->
+		var dimensionsMap:Map<Int, Dimensions> = [
+			0 => {
+				heightV: 40,
+				widthV: 40,
+				heightC: 26,
+				widthC: 26
+			},
+			1 => {
+				heightV: 40,
+				widthV: 40,
+				heightC: 26,
+				widthC: 26
+			},
+			2 => {
+				heightV: 40,
+				widthV: 40,
+				heightC: 26,
+				widthC: 26
+			}
+		];
+		super(new FramesHelper("assets/images/points-50x50-3x2.png", 50, 3, 2), dimensionsMap, (x, y, key) ->
 		{
-			var key = FlxG.random.int(0, 2);
+			if (key < 0)
+			{
+				key = FlxG.random.int(0, 2);
+			}
 			var obstacle = new Collectible(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
 			obstacle.setSize(35, 25);
@@ -136,21 +220,33 @@ class Collectibles extends ObstacleGenerator<Collectible>
 class ObstacleGenerator<T:Obstacle>
 {
 	public var collisionGroup(default, null):FlxTypedGroup<T>;
+	public var dimensions(default, null):Map<Int, Dimensions>;
 
 	var asset:FramesHelper;
-	var generate:(Int, Int) -> T;
+	var generate:(Int, Int, Int) -> T;
 
-	public function new(asset:FramesHelper, generate:(Int, Int) -> T)
+	public function new(asset:FramesHelper, dimensions:Map<Int, Dimensions>, generate:(Int, Int, Int) -> T)
 	{
 		collisionGroup = new FlxTypedGroup<T>();
 		this.asset = asset;
+		this.dimensions = dimensions;
 		this.generate = generate;
 	}
 
-	public function get(x:Int, y:Int):T
+	public function get(x:Int, y:Int, key:Int = -1):T
 	{
-		var obstacle = generate(x, y);
+		var obstacle = generate(x, y, key);
 		collisionGroup.add(obstacle);
 		return obstacle;
+	}
+
+	public function getTests(x, y):Array<Obstacle>
+	{
+		var tests:Array<Obstacle> = [];
+		for (key in 0...asset.numCols)
+		{
+			tests.push(get(x + key * asset.frameSizeW, y, key));
+		}
+		return tests;
 	}
 }
