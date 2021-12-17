@@ -34,7 +34,7 @@ class Bird extends Obstacle
 		if (key == 1)
 		{
 			behaviours.push(BaseState.delays.DefaultAuto(tweenLength * 2, () -> {
-				// do nothing for a bit
+				// glide (do nothing for a bit before starting again)
 			}));
 		}
 
@@ -223,8 +223,7 @@ class ObstaclesGround extends ObstacleGenerator<Rock>
 			var obstacle = new Rock(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
 			obstacle.animation.frameIndex = key;
-			obstacle.setSize(15, 15);
-			obstacle.centerOffsets();
+
 			return obstacle;
 		});
 	}
@@ -257,8 +256,6 @@ class ObstaclesAir extends ObstacleGenerator<Obstacle>
 
 			var obstacle = new Bird(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
-			obstacle.setSize(35, 25);
-			obstacle.centerOffsets();
 
 			return obstacle;
 		});
@@ -297,8 +294,6 @@ class Collectibles extends ObstacleGenerator<Collectible>
 			}
 			var obstacle = new Collectible(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
-			obstacle.setSize(35, 25);
-			obstacle.centerOffsets();
 			var oscMin = key * 3;
 			var oscMax = oscMin * key;
 			obstacle.oscillationFactor = FlxG.random.float(oscMin, oscMax);
@@ -326,6 +321,9 @@ class ObstacleGenerator<T:Obstacle>
 	public function get(x:Int, y:Int, key:Int = -1):T
 	{
 		var obstacle = generate(x, y, key);
+		var d = dimensions[key];
+		obstacle.setSize(d.widthC, d.heightC);
+		obstacle.centerOffsets();
 		collisionGroup.add(obstacle);
 		return obstacle;
 	}
