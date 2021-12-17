@@ -37,14 +37,25 @@ class DelayFactory
 			onReady: onReady
 		};
 	}
+
+	public function DefaultAuto(durationSeconds:Float, onReady:() -> Void, isStarted:Bool = true, isResetAuto:Bool = true):Delay
+	{
+		return {
+			duration: (durationSeconds * framesPerSecond) * (1 / framesPerSecond),
+			isInProgress: isStarted,
+			currentTime: 0.0,
+			isResetAuto: isResetAuto,
+			onReady: onReady
+		};
+	}
 }
 
 class DelayExtensions
 {
-	static public function wait(d:Delay, elapsed:Float)
+	static public function wait(d:Delay, elapsed:Float):Bool
 	{
 		if (!d.isInProgress)
-			return;
+			return false;
 
 		d.currentTime += elapsed;
 		if (d.currentTime >= d.duration)
@@ -52,7 +63,10 @@ class DelayExtensions
 			d.isInProgress = d.isResetAuto;
 			d.currentTime = 0;
 			d.onReady();
+			return true;
 		}
+
+		return false;
 	}
 
 	static public function stop(d:Delay)

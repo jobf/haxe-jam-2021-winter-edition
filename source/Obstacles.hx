@@ -2,12 +2,76 @@ class Rock extends Obstacle
 {
 	public function new(x, y, key = 1, frames:FlxTileFrames, isPermanent:Bool = true)
 	{
-		super(x, y, key, frames, isPermanent);
+		super(x, y, key, frames, [], isPermanent);
+	}
+}
+
+class Bird extends Obstacle
+{
+	public function new(x, y, key = 0, frames:FlxTileFrames)
+	{
+		var oscAmount = FlxG.random.int(2, 10);
+		var oscTime = FlxG.random.float(0.1, 0.4);
+		var tweenLength = oscTime + 0.1;
+		if (key > 0)
+		{
+			oscAmount *= 3;
+			oscTime *= 2;
+			tweenLength *= 2;
+		}
+
+		var behaviours:Array<Delay> = [
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount}, oscTime);
+			}),
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount * -1}, oscTime);
+			})
+		];
+		// if it's a big bird (key 1), add glide behaviour
+		if (key == 1)
+		{
+			behaviours.push(BaseState.delays.DefaultAuto(tweenLength * 2, () -> {
+				// do nothing for a bit
+			}));
+		}
+
+		super(x, y, key, frames, behaviours);
 	}
 }
 
 class Collectible extends Obstacle
 {
+	public function new(x, y, key = 1, frames:FlxTileFrames)
+	{
+		var oscAmount = FlxG.random.int(2, 10);
+		var oscTime = FlxG.random.float(0.1, 0.4);
+		var tweenLength = oscTime + 0.1;
+
+		var behaviours:Array<Delay> = [
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount * -1}, oscTime);
+			}),
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount}, oscTime);
+			}),
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount}, oscTime);
+			}),
+			BaseState.delays.DefaultAuto(tweenLength, () ->
+			{
+				FlxTween.tween(this, {y: y + oscAmount * -1}, oscTime);
+			}),
+		];
+
+		super(x, y, key, frames, behaviours);
+	}
+
 	override function remove()
 	{
 		// send sprite skyward
@@ -29,8 +93,12 @@ class Obstacle extends FlxSprite
 	var blinkFrameIndex:Int;
 	var blinkedFor:Float = 0;
 	var blinkDuration:Float = 1.05;
+	var behaviours:Array<Delay>;
+	var behaviorIndex = 0;
 
-	public function new(x, y, key:Int, frames:FlxTileFrames, isPermanent:Bool = false)
+	public var oscillationFactor:Float = 0;
+
+	public function new(x, y, key:Int, frames:FlxTileFrames, behaviours:Array<Delay>, isPermanent:Bool = false)
 	{
 		super(x, y);
 		this.key = key;
@@ -38,6 +106,8 @@ class Obstacle extends FlxSprite
 		animation.frameIndex = key;
 		blinkFrameIndex = key + frames.numCols;
 		this.isPermanent = isPermanent;
+		this.behaviours = behaviours;
+
 		isHit = false;
 		#if debug
 		this.debugBoundingBoxColorNotSolid = FlxColor.MAGENTA;
@@ -77,6 +147,8 @@ class Obstacle extends FlxSprite
 			kill();
 			visible = false;
 		}
+
+		// blink
 		if (animation.frameIndex != blinkFrameIndex && blinkedFor == 0)
 		{
 			var blinkChance = FlxG.random.int(0, 1000);
@@ -93,6 +165,19 @@ class Obstacle extends FlxSprite
 			{
 				blinkedFor = 0;
 				animation.frameIndex = key;
+			}
+		}
+
+		// behaviours
+		if (behaviours.length > 0)
+		{
+			if (behaviours[behaviorIndex].wait(elapsed))
+			{
+				behaviorIndex++;
+				if (behaviorIndex > behaviours.length - 1)
+				{
+					behaviorIndex = 0;
+				}
 			}
 		}
 	}
@@ -169,10 +254,12 @@ class ObstaclesAir extends ObstacleGenerator<Obstacle>
 			{
 				key = FlxG.random.int(0, 1);
 			}
-			var obstacle = new Obstacle(x, y, key, asset.getFrames());
+
+			var obstacle = new Bird(x, y, key, asset.getFrames());
 			collisionGroup.add(obstacle);
 			obstacle.setSize(35, 25);
 			obstacle.centerOffsets();
+
 			return obstacle;
 		});
 	}
@@ -212,6 +299,9 @@ class Collectibles extends ObstacleGenerator<Collectible>
 			collisionGroup.add(obstacle);
 			obstacle.setSize(35, 25);
 			obstacle.centerOffsets();
+			var oscMin = key * 3;
+			var oscMax = oscMin * key;
+			obstacle.oscillationFactor = FlxG.random.float(oscMin, oscMax);
 			return obstacle;
 		});
 	}
