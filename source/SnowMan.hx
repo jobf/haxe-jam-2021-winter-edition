@@ -18,8 +18,6 @@ typedef Dimensions =
 
 class SnowBalls
 {
-	// public var head(default, null):Snowball;
-	// public var torso(default, null):Snowball;
 	public var base(get, null):Snowball;
 	public var collisionGroup(default, null):FlxTypedGroup<Snowball>;
 	public var accelerationFactor:Float = 5;
@@ -149,11 +147,12 @@ class SnowBalls
 	public function changeVelocityBy(difference:Float)
 	{
 		// set base velocity
-		balls[0].velocity.x += difference;
+		base.velocity.x += difference;
+		base.angularVelocity = base.velocity.x * 3.1;
 		// copy to other balls
 		for (i in 1...balls.length)
 		{
-			balls[i].velocity.x = balls[0].velocity.x;
+			balls[i].velocity.x = base.velocity.x;
 		}
 	}
 
@@ -221,6 +220,7 @@ class Snowball extends FlxSprite
 	var floor:Float;
 	var cacheVelocity:FlxPoint = FlxPoint.get();
 	var cacheAcceleration:FlxPoint = FlxPoint.get();
+	var cacheAngularVelocity:Float = 0;
 	var minimumFrameIndex:Int;
 	var dimensions:Dimensions;
 
@@ -313,13 +313,6 @@ class Snowball extends FlxSprite
 		{
 			// fall towards floor by default
 			acceleration.y = gravity;
-
-			// if resting on a ball, track that
-			if (ballUnderneath != null && !isAirborne)
-			{
-				velocity.y = ballUnderneath.velocity.y;
-				acceleration.y = ballUnderneath.acceleration.y;
-			}
 		}
 		else
 		{
@@ -328,6 +321,17 @@ class Snowball extends FlxSprite
 			acceleration.y = 0;
 			velocity.y = 0;
 			y -= amountPastBottom;
+			if (ballUnderneath == null)
+			{
+				// always rotate clockwise on the ground
+				angularVelocity = Math.abs(angularVelocity);
+			}
+		}
+		if (ballUnderneath != null && !isAirborne)
+		{
+			velocity.y = ballUnderneath.velocity.y;
+			angularVelocity = ballUnderneath.angularVelocity * -1;
+			acceleration.y = ballUnderneath.acceleration.y;
 		}
 	}
 
@@ -335,6 +339,7 @@ class Snowball extends FlxSprite
 	{
 		velocity.copyTo(cacheVelocity);
 		acceleration.copyTo(cacheAcceleration);
+		cacheAngularVelocity = angularVelocity;
 		trace('$tag cached v $cacheVelocity a $cacheAcceleration');
 	}
 
@@ -342,6 +347,7 @@ class Snowball extends FlxSprite
 	{
 		cacheVelocity.copyTo(velocity);
 		cacheAcceleration.copyTo(acceleration);
+		angularVelocity = cacheAngularVelocity;
 	}
 
 	function syncFrameWithHealth()

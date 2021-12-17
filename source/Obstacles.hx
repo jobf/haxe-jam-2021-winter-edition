@@ -1,14 +1,14 @@
 class Rock extends Obstacle
 {
-	public function new(x, y, key = 1, frames:FlxTileFrames, isPermanent:Bool = true)
+	public function new(x, y, key = 1, frames:FlxTileFrames, dimensions:Dimensions, isPermanent:Bool = true)
 	{
-		super(x, y, key, frames, [], isPermanent);
+		super(x, y, key, frames, [], dimensions, isPermanent);
 	}
 }
 
 class Bird extends Obstacle
 {
-	public function new(x, y, key = 0, frames:FlxTileFrames)
+	public function new(x, y, key = 0, frames:FlxTileFrames, dimensions:Dimensions)
 	{
 		var oscAmount = FlxG.random.int(2, 10);
 		var oscTime = FlxG.random.float(0.1, 0.4);
@@ -38,13 +38,13 @@ class Bird extends Obstacle
 			}));
 		}
 
-		super(x, y, key, frames, behaviours);
+		super(x, y, key, frames, behaviours, dimensions);
 	}
 }
 
 class Collectible extends Obstacle
 {
-	public function new(x, y, key = 1, frames:FlxTileFrames)
+	public function new(x, y, key = 1, frames:FlxTileFrames, dimensions:Dimensions)
 	{
 		var oscAmount = FlxG.random.int(2, 10);
 		var oscTime = FlxG.random.float(0.1, 0.4);
@@ -69,7 +69,7 @@ class Collectible extends Obstacle
 			}),
 		];
 
-		super(x, y, key, frames, behaviours);
+		super(x, y, key, frames, behaviours, dimensions);
 	}
 
 	override function remove()
@@ -95,10 +95,11 @@ class Obstacle extends FlxSprite
 	var blinkDuration:Float = 1.05;
 	var behaviours:Array<Delay>;
 	var behaviorIndex = 0;
+	var dimensions:Dimensions;
 
 	public var oscillationFactor:Float = 0;
 
-	public function new(x, y, key:Int, frames:FlxTileFrames, behaviours:Array<Delay>, isPermanent:Bool = false)
+	public function new(x, y, key:Int, frames:FlxTileFrames, behaviours:Array<Delay>, dimensions:Dimensions, isPermanent:Bool = false)
 	{
 		super(x, y);
 		this.key = key;
@@ -107,8 +108,12 @@ class Obstacle extends FlxSprite
 		blinkFrameIndex = key + frames.numCols;
 		this.isPermanent = isPermanent;
 		this.behaviours = behaviours;
+		this.dimensions = dimensions;
 
 		isHit = false;
+
+		setSize(this.dimensions.widthC, this.dimensions.heightC);
+		centerOffsets();
 		#if debug
 		this.debugBoundingBoxColorNotSolid = FlxColor.MAGENTA;
 		this.debugBoundingBoxColor = FlxColor.MAGENTA;
@@ -220,7 +225,7 @@ class ObstaclesGround extends ObstacleGenerator<Rock>
 				trace('random rock');
 				key = FlxG.random.int(0, 3);
 			}
-			var obstacle = new Rock(x, y, key, asset.getFrames());
+			var obstacle = new Rock(x, y, key, asset.getFrames(), dimensions[key]);
 			collisionGroup.add(obstacle);
 			obstacle.animation.frameIndex = key;
 
@@ -254,7 +259,7 @@ class ObstaclesAir extends ObstacleGenerator<Obstacle>
 				key = FlxG.random.int(0, 1);
 			}
 
-			var obstacle = new Bird(x, y, key, asset.getFrames());
+			var obstacle = new Bird(x, y, key, asset.getFrames(), dimensions[key]);
 			collisionGroup.add(obstacle);
 
 			return obstacle;
@@ -292,7 +297,7 @@ class Collectibles extends ObstacleGenerator<Collectible>
 			{
 				key = FlxG.random.int(0, 2);
 			}
-			var obstacle = new Collectible(x, y, key, asset.getFrames());
+			var obstacle = new Collectible(x, y, key, asset.getFrames(), dimensionsMap[key]);
 			collisionGroup.add(obstacle);
 			var oscMin = key * 3;
 			var oscMax = oscMin * key;
@@ -321,9 +326,7 @@ class ObstacleGenerator<T:Obstacle>
 	public function get(x:Int, y:Int, key:Int = -1):T
 	{
 		var obstacle = generate(x, y, key);
-		var d = dimensions[key];
-		obstacle.setSize(d.widthC, d.heightC);
-		obstacle.centerOffsets();
+
 		collisionGroup.add(obstacle);
 		return obstacle;
 	}
