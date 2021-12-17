@@ -284,11 +284,20 @@ class PlayState extends BaseState
 			{
 				var bump = switch (rock.key)
 				{
-					case 0: -1;
+					case 3: -1;
 					case _: rock.key * 100;
 				};
+				if (bump < 0)
+				{
+					// hit the ice block, remove the colliding ball
+					snowBody.base.remove();
+					snowBody.removeBall(snowBody.base);
+				}
+				else
+				{
+					snowBody.jump(bump);
+				}
 				rock.collide();
-				snowBody.jump(bump);
 			}
 		});
 

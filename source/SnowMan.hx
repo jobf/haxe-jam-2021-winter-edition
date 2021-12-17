@@ -247,7 +247,7 @@ class Snowball extends FlxSprite
 		centerOffsets();
 	}
 
-	function remove()
+	public function remove()
 	{
 		FlxTween.tween(this, {x: x - 1000}, 0.5, {
 			onComplete: tween ->
