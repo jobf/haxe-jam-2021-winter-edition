@@ -20,6 +20,7 @@ class BaseState extends FlxState
 		add(layers);
 		glyphs = new Glyphs("assets/fonts/ice-and-snow-104.png",
 			" !#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~§¶—•∙", 104);
+		layers.overlay.add(new FlxSprite("assets/images/overlay-frame-896x504.png"));
 	}
 
 	override public function update(elapsed:Float)
