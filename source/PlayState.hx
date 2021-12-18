@@ -22,13 +22,13 @@ class PlayState extends BaseState
 	var isPlayInProgress:Bool = false;
 	var isSlowMotion:Bool = false;
 	var slowMoFactor:Float = 0.9;
+	var hud:HUD;
 
 	override public function create()
 	{
 		super.create();
 		FlxG.debugger.drawDebug = true;
 		hasReachedDistance = false;
-		bgColor = FlxColor.WHITE;
 		level = Data.level;
 		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
 		layers.bg.add(bg);
@@ -72,8 +72,10 @@ class PlayState extends BaseState
 
 		accelerationDelay = BaseState.delays.Default(0.06, handleMovement, true, true);
 		slowMoDelay = BaseState.delays.Default(1.0, resetSlowMo, false, false);
-		layers.overlay.add(new HUD(level));
-
+		hud = new HUD(level);
+		layers.bg.add(hud);
+		layers.overOverlay.add(hud.slowMoMeter);
+		layers.overOverlay.fadeOut(0.1);
 		startIntro();
 	}
 
@@ -140,6 +142,10 @@ class PlayState extends BaseState
 
 	function handleMovement()
 	{
+		if (!isPlayInProgress)
+		{
+			return;
+		}
 		// update direction based on key input
 		var nextDirection = shouldAccelerate();
 
@@ -174,8 +180,25 @@ class PlayState extends BaseState
 
 	function resetSlowMo()
 	{
+		trace('slow mo stop');
 		isSlowMotion = false;
 		snowBody.restoreCachedSpeed();
+		slowMoDelay.stop();
+		layers.overOverlay.fadeOut(0.2);
+	}
+
+	function removeBall(b:Snowball)
+	{
+		if (snowBody.base == null)
+		{
+			// end play
+			isPlayInProgress = false;
+		}
+		else
+		{
+			b.remove();
+			snowBody.removeBall(b);
+		}
 	}
 
 	override public function update(elapsed:Float)
@@ -192,16 +215,14 @@ class PlayState extends BaseState
 				var reduceVelBy = snowBody.base.velocity.x * slowMoFactor;
 				snowBody.changeVelocityBy(reduceVelBy * -1);
 				bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
+				layers.overOverlay.fadeIn(0.2);
 				trace('slow mo start');
 			}
 			if (FlxG.keys.justReleased.LEFT && isSlowMotion)
 			{
-				trace('slow mo stop');
-				snowBody.restoreCachedSpeed();
-				isSlowMotion = false;
-				slowMoDelay.stop();
-				// snowBody.changeVelocityBy(snowBody.base.velocity.x - snowBody.base.velocity.x * slowMoFactor);
+				resetSlowMo();
 			}
+
 			snowBody.update(elapsed);
 			hasReachedDistance = bg.x * -1 > level.levelLength;
 			if (hasReachedDistance)
@@ -226,19 +247,13 @@ class PlayState extends BaseState
 
 		if (FlxG.keys.justReleased.B)
 		{
-			@:privateAccess
-			var b = snowBody.balls[0];
-			@:privateAccess
-			b.remove();
-			snowBody.removeBall(b);
+			removeBall(snowBody.base);
 		}
 		if (FlxG.keys.justReleased.T)
 		{
 			@:privateAccess
 			var b = snowBody.balls[1];
-			@:privateAccess
-			b.remove();
-			snowBody.removeBall(b);
+			removeBall(b);
 		}
 		if (FlxG.keys.justPressed.L)
 		{
@@ -298,8 +313,7 @@ class PlayState extends BaseState
 				if (velocityOverride < 0)
 				{
 					// hit the ice block, remove the colliding ball
-					snowBody.base.remove();
-					snowBody.removeBall(snowBody.base);
+					removeBall(snowBody.base);
 				}
 				else
 				{
@@ -317,7 +331,7 @@ class PlayState extends BaseState
 				bird.collide();
 				if (!snow.surviveCollision())
 				{
-					snowBody.removeBall(snow);
+					removeBall(snow);
 				};
 			}
 		});

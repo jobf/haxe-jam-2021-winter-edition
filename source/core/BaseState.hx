@@ -15,7 +15,7 @@ class BaseState extends FlxState
 	override public function create()
 	{
 		super.create();
-		bgColor = 0xAAeef2ff;
+		bgColor = 0xffeef2ff;
 		layers = new Layers();
 		add(layers);
 		glyphs = new Glyphs("assets/fonts/ice-and-snow-104.png",

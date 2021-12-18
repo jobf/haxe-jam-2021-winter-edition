@@ -6,6 +6,7 @@ class Layers extends FlxGroup
 	public var entities:FlxSpriteGroup;
 	public var foreground:FlxSpriteGroup;
 	public var overlay:FlxSpriteGroup;
+	public var overOverlay:FlxSpriteGroup;
 
 	public function new()
 	{
@@ -19,11 +20,13 @@ class Layers extends FlxGroup
 
 		foreground = new FlxSpriteGroup();
 		foreground.scrollFactor.x = 0;
-		// foreground.scrollFactor.y = 0;
 
 		add(foreground);
 
 		overlay = new FlxSpriteGroup();
 		add(overlay);
+
+		overOverlay = new FlxSpriteGroup();
+		add(overOverlay);
 	}
 }
