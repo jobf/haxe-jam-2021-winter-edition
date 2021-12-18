@@ -88,6 +88,7 @@ class Obstacle extends FlxSprite
 {
 	public var isHit(default, null):Bool;
 	public var key(default, null):Int;
+	public var warning:Warning;
 
 	var isPermanent:Bool;
 	var blinkFrameIndex:Int;
@@ -144,6 +145,7 @@ class Obstacle extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		warning.y = y;
 		#if debug
 		drawDebug();
 		#end
@@ -151,6 +153,8 @@ class Obstacle extends FlxSprite
 		{
 			kill();
 			visible = false;
+			this.warning.kill();
+			this.warning.visible = false;
 		}
 
 		// blink
@@ -326,8 +330,9 @@ class ObstacleGenerator<T:Obstacle>
 	public function get(x:Int, y:Int, key:Int = -1):T
 	{
 		var obstacle = generate(x, y, key);
-
 		collisionGroup.add(obstacle);
+		final warningX = 840;
+		obstacle.warning = new Warning(warningX, y, 0, asset.getFrames(), obstacle);
 		return obstacle;
 	}
 
@@ -339,5 +344,18 @@ class ObstacleGenerator<T:Obstacle>
 			tests.push(get(x + key * asset.frameSizeW, y, key));
 		}
 		return tests;
+	}
+}
+
+class Warning extends FlxSprite
+{
+	var approaching:FlxSprite;
+
+	public function new(x, y, key:Int, frames:FlxTileFrames, approaching:FlxSprite)
+	{
+		super(x, y);
+		this.frames = frames;
+		this.approaching = approaching;
+		this.animation.frameIndex = key;
 	}
 }

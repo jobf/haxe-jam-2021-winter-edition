@@ -259,13 +259,15 @@ class PlayState extends BaseState
 
 	function spawnRock()
 	{
-		var rock = rocks.get(FlxG.width, lowObstaclesY);
+		var rock = rocks.get(FlxG.width * 3, lowObstaclesY);
 		layers.bg.add(rock);
+		layers.overlay.add(rock.warning);
 	}
 
 	function spawnBird()
 	{
-		var bird = birds.get(FlxG.width, midObstaclesY);
+		var bird = birds.get(FlxG.width * 3, midObstaclesY);
+		layers.overlay.add(bird.warning);
 		layers.foreground.add(bird);
 	}
 
@@ -275,8 +277,9 @@ class PlayState extends BaseState
 		var waveCenter:Float = 200;
 		// determine y pos of points on a wave
 		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
-		var points = points.get(FlxG.width, y);
+		var points = points.get(FlxG.width * 3, y);
 
+		layers.overlay.add(points.warning);
 		layers.foreground.add(points);
 	}
 
