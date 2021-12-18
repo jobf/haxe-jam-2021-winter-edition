@@ -317,12 +317,15 @@ class ObstacleGenerator<T:Obstacle>
 	public var dimensions(default, null):Map<Int, Dimensions>;
 
 	var asset:FramesHelper;
+	var alertKey:Int = 1;
+	var alertAsset:FramesHelper;
 	var generate:(Int, Int, Int) -> T;
 
 	public function new(asset:FramesHelper, dimensions:Map<Int, Dimensions>, generate:(Int, Int, Int) -> T)
 	{
 		collisionGroup = new FlxTypedGroup<T>();
 		this.asset = asset;
+		this.alertAsset = new FramesHelper("assets/images/alerts-60x60-3x1.png", 60, 3, 1);
 		this.dimensions = dimensions;
 		this.generate = generate;
 	}
@@ -332,7 +335,7 @@ class ObstacleGenerator<T:Obstacle>
 		var obstacle = generate(x, y, key);
 		collisionGroup.add(obstacle);
 		final warningX = 840;
-		obstacle.warning = new Warning(warningX, y, 0, asset.getFrames(), obstacle);
+		obstacle.warning = new Warning(warningX, y, alertKey, alertAsset.getFrames(), obstacle);
 		return obstacle;
 	}
 
