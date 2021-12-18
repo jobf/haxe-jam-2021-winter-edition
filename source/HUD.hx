@@ -90,3 +90,59 @@ class DrawnBar extends CallbackFlxBar
 		}
 	}
 }
+
+@:enum abstract Message(Int) from Int to Int
+{
+	var GOFASTER;
+	var SLOWDOWN;
+	var SOFAST;
+	var FROZENTIME;
+	var HIGHSCORE;
+	var TRYAGAIN;
+	var RESTART;
+	var GAMEOVER;
+	var QUIT;
+	var WIN;
+}
+
+class Messages
+{
+	var asset:FramesHelper;
+
+	public function new()
+	{
+		asset = new FramesHelper("assets/images/messages-420x70-1x10.png", 420, 1, 10, 70);
+	}
+
+	public function get(x:Int, y:Int, message:Message):FlxSprite
+	{
+		var s = new FlxSprite(x, y);
+		s.frames = asset.getFrames();
+		s.animation.frameIndex = message;
+		return s;
+	}
+
+	public function show(m:Message, group:FlxSpriteGroup)
+	{
+		final tweenDuration = 0.25;
+		var x = Std.int((FlxG.width * 0.5) - (asset.frameSizeW * 0.5));
+		var y = Std.int((FlxG.height * 0.5) - (asset.frameSizeH * 0.5));
+		var s = get(x, 1000, m);
+		trace('message x ${s.x} ${s.y}');
+		group.add(s);
+		FlxTween.tween(s, {y: y}, tweenDuration, {
+			ease: FlxEase.sineIn,
+			onComplete: tween ->
+			{
+				FlxTween.tween(s, {y: -1000}, tweenDuration, {
+					startDelay: 1.0,
+					ease: FlxEase.sineOut,
+					onComplete: tween ->
+					{
+						s.kill();
+					}
+				});
+			}
+		});
+	}
+}

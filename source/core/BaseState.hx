@@ -1,9 +1,12 @@
 package core;
 
+import HUD.Messages;
+
 class BaseState extends FlxState
 {
 	var layers:Layers;
 	var glyphs:Glyphs;
+	var messages:Messages;
 
 	public static var delays = new DelayFactory();
 
@@ -17,6 +20,7 @@ class BaseState extends FlxState
 		super.create();
 		bgColor = 0xffeef2ff;
 		layers = new Layers();
+		messages = new Messages();
 		add(layers);
 		glyphs = new Glyphs("assets/fonts/ice-and-snow-104.png",
 			" !#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~§¶—•∙", 104);

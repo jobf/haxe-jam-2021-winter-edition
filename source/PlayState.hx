@@ -253,12 +253,13 @@ class PlayState extends BaseState
 				snowBody.cacheSpeed();
 				isSlowMotion = true;
 				slowMoDelay.start();
-				var currentVel = snowBody.base.velocity.x;
 				var reduceVelBy = snowBody.base.velocity.x * slowMoFactor;
 				snowBody.changeVelocityBy(reduceVelBy * -1);
 				bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
 				layers.overOverlay.fadeIn(0.2);
-				trace('slow mo start');
+				messages.show(FROZENTIME, layers.overlay);
+
+				// trace('slow mo start');
 			}
 			if (FlxG.keys.justReleased.LEFT && isSlowMotion)
 			{
