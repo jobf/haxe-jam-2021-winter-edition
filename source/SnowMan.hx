@@ -105,14 +105,13 @@ class SnowBalls
 		isPopReady = true;
 	}
 
-	public function jump(?velocityOverride:Float)
+	public function jump(?velocityOverride:Float, readyOverride:Bool = false)
 	{
-		if (isJumpReady)
+		if (isJumpReady || readyOverride)
 		{
-			var b = balls[0];
-			if (b.alive && !b.isAirborne)
+			if (base.alive && !base.isAirborne)
 			{
-				b.pop();
+				base.pop(velocityOverride);
 				isJumpReady = false;
 				jumpCoolOff.start();
 			}

@@ -286,12 +286,13 @@ class PlayState extends BaseState
 		{
 			if (!rock.isHit)
 			{
-				var bump = switch (rock.key)
+				var velocityOverride = switch (rock.key)
 				{
-					case 3: -1;
-					case _: rock.key * 100;
+					case 3: -1; // ice block, stop
+					case 2: null; // ramp, jump
+					case _: (rock.key + 1) * 150; // bump
 				};
-				if (bump < 0)
+				if (velocityOverride < 0)
 				{
 					// hit the ice block, remove the colliding ball
 					snowBody.base.remove();
@@ -299,7 +300,8 @@ class PlayState extends BaseState
 				}
 				else
 				{
-					snowBody.jump(bump);
+					final overrideJumpReady = true;
+					snowBody.jump(velocityOverride, overrideJumpReady);
 				}
 				rock.collide();
 			}
