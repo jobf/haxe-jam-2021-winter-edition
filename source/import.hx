@@ -12,6 +12,7 @@ import flixel.graphics.frames.FlxBitmapFont;
 import flixel.graphics.frames.FlxTileFrames;
 import flixel.group.FlxGroup;
 import flixel.group.FlxSpriteGroup;
+import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.text.FlxBitmapText;

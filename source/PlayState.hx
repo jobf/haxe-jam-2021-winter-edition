@@ -31,18 +31,17 @@ class PlayState extends BaseState
 		bgColor = FlxColor.WHITE;
 		level = Data.level;
 		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
-		// bg.screenCenter();
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
 
-		snowBody = new SnowBalls(128, FlxG.height - 86 * 3, level.maxVelocity);
+		snowBody = new SnowBalls(96, 320, level.maxVelocity);
 		snowTarget = new FlxObject(snowBody.base.x, FlxG.height + 100);
 		snowTarget.maxVelocity.x = bg.maxVelocity.x;
 		add(snowTarget);
 		snowBody.addBallsTo(layers.entities);
 
 		lowObstaclesY = Std.int(snowBody.base.y + (snowBody.base.height - 10));
-		midObstaclesY = lowObstaclesY - 100; // Std.int(snowBody.torso.y - 35);
+		midObstaclesY = Std.int(lowObstaclesY - (FlxG.height * 0.3)); // Std.int(snowBody.torso.y - 35);
 
 		rocks = new ObstaclesGround();
 		rocksDelay = {
@@ -64,7 +63,7 @@ class PlayState extends BaseState
 
 		points = new Collectibles();
 		pointsDelay = {
-			stepTravelled: 400, // new bird every x pixels
+			stepTravelled: 500, // new gift every x pixels
 			lastTravelled: 0,
 			isInProgress: true,
 			isResetAuto: true,
@@ -272,7 +271,12 @@ class PlayState extends BaseState
 
 	function spawnPoints()
 	{
-		var points = points.get(FlxG.width, midObstaclesY);
+		final waveAmp:Float = 100;
+		var waveCenter:Float = 200;
+		// determine y pos of points on a wave
+		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
+		var points = points.get(FlxG.width, y);
+
 		layers.foreground.add(points);
 	}
 
