@@ -23,6 +23,7 @@ class PlayState extends BaseState
 	var isSlowMotion:Bool = false;
 	var slowMoFactor:Float = 0.9;
 	var hud:HUD;
+	var introAsset:FramesHelper;
 
 	override public function create()
 	{
@@ -76,6 +77,7 @@ class PlayState extends BaseState
 		layers.bg.add(hud);
 		layers.overOverlay.add(hud.slowMoMeter);
 		layers.overOverlay.fadeOut(0.1);
+		introAsset = new FramesHelper("assets/images/start-826x200-1x2.png", 826, 1, 2, 200);
 		startIntro();
 	}
 
@@ -109,29 +111,43 @@ class PlayState extends BaseState
 
 	function startIntro()
 	{
-		var texts = [for (s in ["GET", "READY", "GO !!",]) glyphs.getText(s)];
-		var duration = 1;
+		var screenMidX = FlxG.width * 0.5;
+		var screenMidY = FlxG.height * 0.5;
+		final textWidth = 826;
+		final textHeight = 200;
+		var endX = screenMidX - (textWidth * 0.5);
+		var endY = screenMidY - (textHeight * 0.5);
+		var ready = new FlxSprite(endX, 1000);
+		ready.frames = introAsset.getFrames();
+		ready.animation.frameIndex = 0;
+		layers.overlay.add(ready);
+
+		var go = new FlxSprite(endX, 1000);
+		go.frames = introAsset.getFrames();
+		go.animation.frameIndex = 1;
+		layers.overlay.add(go);
+
+		var duration = 0.7;
+		var texts = [ready, go];
 		for (i => t in texts)
 		{
-			t.screenCenter();
-			var endX = t.x;
-			t.x = -1000;
-			layers.overlay.add(t);
-			var tween = FlxTween.tween(t, {x: endX}, duration);
+			var tween = FlxTween.tween(t, {x: endX, y: endY}, duration, {ease: FlxEase.bounceIn});
 			tween.onComplete = (_) ->
 			{
-				FlxTween.tween(t, {y: 1000}, 1, {
-					onComplete: (c) ->
+				if (i == texts.length - 1)
+				{
+					isPlayInProgress = true;
+					for (et in texts)
 					{
-						t.kill();
-						if (i == texts.length - 1)
+						FlxTween.tween(et, {y: -200}, 0.5, {ease: FlxEase.bounceOut});
+						et.fadeOut(0.3, onComplete ->
 						{
-							isPlayInProgress = true;
-						}
+							et.kill();
+						});
 					}
-				});
+				}
 			}
-			duration += 1;
+			duration += 0.7;
 		}
 	}
 
