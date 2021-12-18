@@ -97,6 +97,7 @@ class Obstacle extends FlxSprite
 	var behaviours:Array<Delay>;
 	var behaviorIndex = 0;
 	var dimensions:Dimensions;
+	var showWarning:Bool = true;
 
 	public var oscillationFactor:Float = 0;
 
@@ -146,15 +147,34 @@ class Obstacle extends FlxSprite
 	{
 		super.update(elapsed);
 		warning.y = y;
+		// 100 % at FlxG.width
+		// greater
+		if (FlxG.keys.justPressed.W)
+		{
+			trace('obstacle x $x');
+		}
+		var maxDistance = FlxG.width * 3;
+		final scaleOffset = 0.3;
+		if (x < FlxG.width && showWarning)
+		{
+			showWarning = false;
+			this.warning.fadeOut(0.15, tween -> this.warning.kill());
+		}
+		else
+		{
+			var distanceTraveledFromSpawnToEdge = maxDistance - x;
+			var percentTraveled = distanceTraveledFromSpawnToEdge / maxDistance;
+			warning.scale.x = percentTraveled + scaleOffset;
+			warning.scale.y = percentTraveled + scaleOffset;
+		}
 		#if debug
 		drawDebug();
 		#end
-		if (x < (width * 2) * -1)
+		var disposeThreshold = (width * 2) * -1;
+		if (x < disposeThreshold)
 		{
-			kill();
 			visible = false;
-			this.warning.kill();
-			this.warning.visible = false;
+			kill();
 		}
 
 		// blink
@@ -334,7 +354,7 @@ class ObstacleGenerator<T:Obstacle>
 	{
 		var obstacle = generate(x, y, key);
 		collisionGroup.add(obstacle);
-		final warningX = 840;
+		final warningX = 838;
 		obstacle.warning = new Warning(warningX, y, alertKey, alertAsset.getFrames(), obstacle);
 		return obstacle;
 	}

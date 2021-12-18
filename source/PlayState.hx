@@ -45,7 +45,7 @@ class PlayState extends BaseState
 
 		rocks = new ObstaclesGround();
 		rocksDelay = {
-			stepTravelled: 500, // new rock every x pixels
+			stepTravelled: 1000, // new rock every x pixels
 			lastTravelled: 0,
 			isInProgress: true,
 			isResetAuto: true,
@@ -77,6 +77,32 @@ class PlayState extends BaseState
 		layers.overOverlay.add(hud.slowMoMeter);
 		layers.overOverlay.fadeOut(0.1);
 		startIntro();
+	}
+
+	function spawnRock()
+	{
+		var rock = rocks.get(FlxG.width * 3, lowObstaclesY);
+		layers.bg.add(rock);
+		layers.overlay.add(rock.warning);
+	}
+
+	function spawnBird()
+	{
+		var bird = birds.get(FlxG.width * 3, midObstaclesY);
+		layers.overlay.add(bird.warning);
+		layers.foreground.add(bird);
+	}
+
+	function spawnPoints()
+	{
+		final waveAmp:Float = 100;
+		var waveCenter:Float = 200;
+		// determine y pos of points on a wave
+		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
+		var points = points.get(FlxG.width * 3, y);
+
+		layers.overlay.add(points.warning);
+		layers.foreground.add(points);
 	}
 
 	var humanize = 1.4;
@@ -270,32 +296,6 @@ class PlayState extends BaseState
 		Data.level.bgSpeedFactor += 0.7;
 		Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
 		FlxG.resetState();
-	}
-
-	function spawnRock()
-	{
-		var rock = rocks.get(FlxG.width * 3, lowObstaclesY);
-		layers.bg.add(rock);
-		layers.overlay.add(rock.warning);
-	}
-
-	function spawnBird()
-	{
-		var bird = birds.get(FlxG.width * 3, midObstaclesY);
-		layers.overlay.add(bird.warning);
-		layers.foreground.add(bird);
-	}
-
-	function spawnPoints()
-	{
-		final waveAmp:Float = 100;
-		var waveCenter:Float = 200;
-		// determine y pos of points on a wave
-		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
-		var points = points.get(FlxG.width * 3, y);
-
-		layers.overlay.add(points.warning);
-		layers.foreground.add(points);
 	}
 
 	inline function handleCollisions()
