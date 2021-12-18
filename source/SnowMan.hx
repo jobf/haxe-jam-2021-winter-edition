@@ -33,6 +33,7 @@ class SnowBalls
 	var isJumpReady:Bool = true;
 	var popCoolOff:Delay;
 	var isPopReady:Bool = true;
+	var maxVelocity:Float;
 	var popVelocity:Float = 350;
 	var gravity:Float = 700;
 	var balls:Array<Snowball> = [];
@@ -41,6 +42,7 @@ class SnowBalls
 	public function new(x, y, maxVelocity)
 	{
 		collisionGroup = new FlxTypedGroup<Snowball>();
+		this.maxVelocity = maxVelocity;
 		asset = new FramesHelper("assets/images/snow-100x100-4x4.png", 100, 4, 4);
 
 		var ballDimensions:Array<Dimensions> = [
@@ -72,15 +74,18 @@ class SnowBalls
 		var floor = y + totalHeight;
 
 		var base = new Snowball(x, floor - ballDimensions[2].heightV, popVelocity, "base", floor, asset.getFrames(), ballDimensions[2]);
+		base.maxVelocity.x = maxVelocity;
 		collisionGroup.add(base);
 		balls.push(base);
 
 		var torso = new Snowball(x, base.y - ballDimensions[1].heightV, popVelocity, "torso", floor, asset.getFrames(), ballDimensions[1]);
+		torso.maxVelocity.x = maxVelocity;
 		torso.ballUnderneath = base;
 		collisionGroup.add(torso);
 		balls.push(torso);
 
 		var head = new Snowball(x, torso.y - ballDimensions[0].heightV, popVelocity, "head", floor, asset.getFrames(), ballDimensions[0]);
+		head.maxVelocity.x = maxVelocity;
 		head.ballUnderneath = torso;
 		collisionGroup.add(head);
 		balls.push(head);
