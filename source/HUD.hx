@@ -128,7 +128,6 @@ class Messages
 		var x = Std.int((FlxG.width * 0.5) - (asset.frameSizeW * 0.5));
 		var y = Std.int((FlxG.height * 0.5) - (asset.frameSizeH * 0.5));
 		var s = get(x, 1000, m);
-		trace('message x ${s.x} ${s.y}');
 		group.add(s);
 		FlxTween.tween(s, {y: y}, tweenDuration, {
 			ease: FlxEase.sineIn,

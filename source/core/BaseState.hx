@@ -25,20 +25,12 @@ class BaseState extends FlxState
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		#if debug
 		if (FlxG.keys.justPressed.R)
 		{
 			FlxG.resetState();
 		}
-		if (FlxG.keys.justPressed.PLUS)
-		{
-			FlxG.camera.targetOffset.y += 20;
-			trace(FlxG.camera.targetOffset);
-		}
-		if (FlxG.keys.justPressed.MINUS)
-		{
-			FlxG.camera.targetOffset.y -= 20;
-			trace(FlxG.camera.targetOffset);
-		}
+		#end
 	}
 
 	function showText(chars:String, onfadecomplete:FlxBitmapText->Void, overrideY:Float = 0, textFadeIn:Float = 0.3)

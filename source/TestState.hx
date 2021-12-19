@@ -27,7 +27,6 @@ class Test extends BaseState
 		snowTarget = new FlxObject(snowBody.base.x, FlxG.height + 100);
 		final targetSpeedReduction = 0.5; // todo, as difficulty increases make this number go up to close the gap between carrot and snow
 		snowTarget.maxVelocity.x = snowBody.base.maxVelocity.x * targetSpeedReduction;
-		trace('snowTarget.maxVelocity ${snowTarget.maxVelocity} snow max ${snowBody.base.maxVelocity}');
 		add(snowTarget);
 		snowBody.addBallsTo(layers.entities);
 

@@ -33,8 +33,7 @@ class PlayState extends BaseState
 		layers.shutter.alpha = 1;
 		FlxG.debugger.drawDebug = true;
 		hasReachedDistance = false;
-		// before loading new level, if length is lower than data then it needs to catch up so is already in play
-		var isSnowRollin = level != null && level.levelLength < Data.level.levelLength;
+
 		// now load stats for use
 		level = Data.level;
 		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
@@ -42,15 +41,14 @@ class PlayState extends BaseState
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
 
 		snowBody = new SnowBalls(96, 320, level.maxVelocity);
-		// if alreadt rolling, start rollin!
-		if (isSnowRollin)
+		// if already rolling, start rollin!
+		if (Data.winCount > 0)
 		{
 			snowBody.changeVelocityBy(Data.level.snowManVelocityIncrement);
 		}
 		snowTarget = new Carrot(snowBody.base.x, snowBody.base.floor - 144);
 		final targetSpeedReduction = 0.7; // todo, as difficulty increases make this number go up to close the gap between carrot and snow
 		snowTarget.maxVelocity.x = snowBody.base.maxVelocity.x * targetSpeedReduction;
-		// trace('snowTarget.maxVelocity ${snowTarget.maxVelocity} snow max ${snowBody.base.maxVelocity}');
 		layers.bg.add(snowTarget);
 		snowBody.addBallsTo(layers.entities);
 
@@ -94,7 +92,6 @@ class PlayState extends BaseState
 		dial = new Dial();
 		layers.foreground.add(dial);
 		dial.y = FlxG.height - 100;
-		// dial.x = FlxG.width - 100;
 		startIntro();
 	}
 
@@ -165,7 +162,7 @@ class PlayState extends BaseState
 						et.fadeOut(fadeOut, onComplete ->
 						{
 							et.kill();
-							if (Data.winCount > 0)
+							if (Data.winCount == 0)
 							{
 								showText("go faster than\nthe carrot!", text ->
 								{
@@ -317,34 +314,32 @@ class PlayState extends BaseState
 
 	function loseLevel(message:Message)
 	{
+		isPlayInProgress = false;
 		final whiteOutFadeIn = 3;
+		final persistMessage = true;
+		final onComplete = () ->
+		{
+			showRestartOptions(message);
+		}
 		if (!lostLevel)
 		{
 			lostLevel = true;
-			isPlayInProgress = false;
-			final persistMessage = true;
-			final onComplete = () ->
-			{
-				showRestartOptions(message);
-			}
 			messages.show(message, layers.overlay, persistMessage, onComplete);
 			layers.bgShutter.fadeIn(whiteOutFadeIn);
 			layers.shutter.fadeIn(whiteOutFadeIn);
 		}
-		// hud.fadeOut(3.0);
 	}
 
 	function progressToNextLevel()
 	{
-		if (isPlayInProgress)
+		if (isPlayInProgress && !lostLevel)
 		{
-			layers.shutter.fadeIn(0.3);
 			isPlayInProgress = false;
+			layers.shutter.fadeIn(0.3);
 			Data.level.levelLength += 1000; // todo this isn't used anymore?
 			Data.level.maxVelocity += level.maxVelocityIncrement;
 			Data.level.bgSpeedFactor += 0.7;
 			Data.winCount++;
-			// Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
 			final onComplete = () ->
 			{
 				final yOverride = FlxG.height;
@@ -409,7 +404,17 @@ class PlayState extends BaseState
 			birdsDelay.wait(bg.x * -1);
 			pointsDelay.wait(bg.x * -1);
 		}
-
+		if (lostLevel)
+		{
+			if (FlxG.keys.justPressed.ENTER)
+			{
+				// reset data
+				Data.init();
+				// begin again
+				FlxG.resetState();
+			}
+		}
+		#if debug
 		if (FlxG.keys.justReleased.B)
 		{
 			removeBall(snowBody.base);
@@ -426,16 +431,7 @@ class PlayState extends BaseState
 
 			snowBody.log();
 		}
-		if (lostLevel)
-		{
-			if (FlxG.keys.justPressed.ENTER)
-			{
-				// reset data
-				Data.init();
-				// begin again
-				FlxG.resetState();
-			}
-		}
+		#end
 	}
 
 	inline function handleCollisions()

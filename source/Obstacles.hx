@@ -200,12 +200,6 @@ class Obstacle extends FlxSprite
 	{
 		super.update(elapsed);
 		warning.y = y;
-		// 100 % at FlxG.width
-		// greater
-		if (FlxG.keys.justPressed.W)
-		{
-			trace('obstacle x $x');
-		}
 
 		final scaleOffset = 0.3;
 		if (x < FlxG.width && showWarning)
@@ -299,7 +293,6 @@ class ObstaclesGround extends ObstacleGenerator<Rock>
 		{
 			if (key < 0)
 			{
-				trace('random rock');
 				key = FlxG.random.int(0, 3);
 			}
 			var obstacle = new Rock(x, y, key, asset.getFrames(), dimensions[key]);

@@ -247,7 +247,6 @@ class Snowball extends FlxSprite
 	{
 		super(x, y);
 		this.dimensions = dimensions;
-		trace('$tag created - y:$y x:$x (floor:$floor)');
 		this.tag = tag;
 		isAirborne = false;
 		this.popVelocity = popVelocity;
