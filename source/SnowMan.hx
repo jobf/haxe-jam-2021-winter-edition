@@ -163,24 +163,27 @@ class SnowBalls
 			return;
 		}
 		toRemove.remove();
-		balls.remove(toRemove);
-		for (i => b in balls)
+		if (toRemove.tag != "head")
 		{
-			if (b.ballUnderneath == toRemove)
+			balls.remove(toRemove);
+			for (i => b in balls)
 			{
-				// that ball is gone, do nothing should have reference to it again
-				b.ballUnderneath = null;
-				// it is no longer resting, thus should be treated as airborne (for falling logic to work)
-				b.isAirborne = true;
-			}
-			// if it's the first in the stack there is only ground underneath
-			if (i == 0)
-			{
-				b.ballUnderneath = null;
-			}
-			else
-			{
-				b.ballUnderneath = balls[i - 1];
+				if (b.ballUnderneath == toRemove)
+				{
+					// that ball is gone, do nothing should have reference to it again
+					b.ballUnderneath = null;
+					// it is no longer resting, thus should be treated as airborne (for falling logic to work)
+					b.isAirborne = true;
+				}
+				// if it's the first in the stack there is only ground underneath
+				if (i == 0)
+				{
+					b.ballUnderneath = null;
+				}
+				else
+				{
+					b.ballUnderneath = balls[i - 1];
+				}
 			}
 		}
 	}
