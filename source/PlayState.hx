@@ -107,7 +107,8 @@ class PlayState extends BaseState
 
 	function spawnBird()
 	{
-		var bird = birds.get(0, midObstaclesY);
+		var birdHeight = FlxG.random.int(midObstaclesY - 60, midObstaclesY + 10);
+		var bird = birds.get(0, birdHeight);
 		layers.overlay.add(bird.warning);
 		layers.foreground.add(bird);
 	}
@@ -188,7 +189,7 @@ class PlayState extends BaseState
 		var targetComplete = (snowTarget.x / (FlxG.width - endMargin)) * 100;
 		if (targetComplete >= 100)
 		{
-			loseLevel();
+			loseLevel(TOOSLOW);
 		}
 		return targetComplete;
 	}
@@ -295,17 +296,24 @@ class PlayState extends BaseState
 		snowBody.removeBall(b);
 		if (b.tag == "head")
 		{
-			loseLevel();
+			loseLevel(TRYAGAIN);
 		}
 	}
 
-	function showRestartOptions()
+	function showRestartOptions(message:Message)
 	{
-		trace('restart?');
+		var t = message == TOOSLOW ? "carrot won!\npress enter to restart" : "owch!!\npress enter to restart";
+		final overrideY = -30;
+		final fadeInTime = 6;
+		showText(t, text ->
+		{
+			text.flicker(0, 0.5);
+		}, overrideY, fadeInTime);
 	}
 
-	function loseLevel()
+	function loseLevel(message:Message)
 	{
+		final whiteOutFadeIn = 3;
 		if (!lostLevel)
 		{
 			lostLevel = true;
@@ -313,11 +321,11 @@ class PlayState extends BaseState
 			final persistMessage = true;
 			final onComplete = () ->
 			{
-				showRestartOptions();
+				showRestartOptions(message);
 			}
-			messages.show(TRYAGAIN, layers.overlay, persistMessage, onComplete);
-			layers.bgShutter.fadeIn(5);
-			layers.shutter.fadeIn(5);
+			messages.show(message, layers.overlay, persistMessage, onComplete);
+			layers.bgShutter.fadeIn(whiteOutFadeIn);
+			layers.shutter.fadeIn(whiteOutFadeIn);
 		}
 		// hud.fadeOut(3.0);
 	}
@@ -331,7 +339,7 @@ class PlayState extends BaseState
 			Data.level.levelLength += 1000; // todo this isn't used anymore?
 			Data.level.maxVelocity += level.maxVelocityIncrement;
 			Data.level.bgSpeedFactor += 0.7;
-			Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
+			// Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
 			final onComplete = () ->
 			{
 				FlxG.resetState();

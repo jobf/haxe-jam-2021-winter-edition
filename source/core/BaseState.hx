@@ -41,12 +41,12 @@ class BaseState extends FlxState
 		}
 	}
 
-	function showText(chars:String, onfadecomplete:FlxBitmapText->Void)
+	function showText(chars:String, onfadecomplete:FlxBitmapText->Void, overrideY:Float = 0, textFadeIn:Float = 0.3)
 	{
 		var text = glyphs.getText(chars);
 		text.screenCenter();
-		text.y = FlxG.height - text.height * 3;
-		text.fadeIn(0.3, true, oncomplete ->
+		text.y = (FlxG.height - text.height * 3) + overrideY;
+		text.fadeIn(textFadeIn, true, oncomplete ->
 		{
 			onfadecomplete(text);
 		});

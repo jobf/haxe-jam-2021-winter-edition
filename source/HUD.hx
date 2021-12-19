@@ -95,7 +95,7 @@ class DrawnBar extends CallbackFlxBar
 {
 	var GOFASTER;
 	var SLOWDOWN;
-	var SOFAST;
+	var TOOSLOW;
 	var FROZENTIME;
 	var HIGHSCORE;
 	var TRYAGAIN;
@@ -148,6 +148,13 @@ class Messages
 							s.kill();
 						}
 					});
+				}
+				else
+				{
+					if (onComplete != null)
+					{
+						onComplete();
+					}
 				}
 			}
 		});
