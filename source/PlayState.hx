@@ -99,15 +99,15 @@ class PlayState extends BaseState
 	function spawnRock()
 	{
 		var rock = rocks.get(0, lowObstaclesY);
-		layers.bg.add(rock);
-		layers.overlay.add(rock.warning);
+		layers.foreground.add(rock);
+		layers.entities.add(rock.warning);
 	}
 
 	function spawnBird()
 	{
 		var birdHeight = FlxG.random.int(midObstaclesY - 60, midObstaclesY + 10);
 		var bird = birds.get(0, birdHeight);
-		layers.overlay.add(bird.warning);
+		layers.entities.add(bird.warning);
 		layers.foreground.add(bird);
 	}
 
@@ -119,7 +119,7 @@ class PlayState extends BaseState
 		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
 		var points = points.get(0, y);
 
-		layers.overlay.add(points.warning);
+		layers.entities.add(points.warning);
 		layers.foreground.add(points);
 	}
 
