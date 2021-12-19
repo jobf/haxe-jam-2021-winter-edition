@@ -230,7 +230,7 @@ class PlayState extends BaseState
 
 	function handleMovement()
 	{
-		if (!isPlayInProgress || snowBody.base == null) // todo set isPlayInProgress flase if last remaining ball is chucked away
+		if (!isPlayInProgress || snowBody.base == null) // todo ? set isPlayInProgress false if last remaining ball is chucked away
 		{
 			isPlayInProgress = false;
 			return;
@@ -238,8 +238,6 @@ class PlayState extends BaseState
 		// update direction based on key input
 		var nextDirection = shouldAccelerate();
 
-		// always speed up target, we are racing it
-		// snowTarget.velocity.x += (level.snowManVelocityIncrement);
 		snowTarget.velocity.x = level.maxVelocity;
 
 		if (!isSlowMotion && nextDirection > 0)
@@ -258,11 +256,6 @@ class PlayState extends BaseState
 			}
 		}
 
-		// if (snowBody.base == null)
-		// {
-		// 	return; // todo set isPlayInProgress flase if last remaining ball is chucked away
-		// }
-		// if player is moving, back drop and other entities should be
 		if (snowBody.base.velocity.x > 0)
 		{
 			bg.velocity.x = (snowBody.base.velocity.x * level.bgSpeedFactor) * -1;
@@ -270,9 +263,14 @@ class PlayState extends BaseState
 			{
 				r.velocity.x = bg.velocity.x;
 			});
+			final minimumBirdVelocity = -60;
 			birds.collisionGroup.forEachAlive((b) ->
 			{
-				b.velocity.x = bg.velocity.x * 1.2;
+				b.velocity.x = bg.velocity.x * 1.7;
+				if (b.velocity.x > minimumBirdVelocity)
+				{
+					b.velocity.x = minimumBirdVelocity;
+				}
 			});
 
 			points.collisionGroup.forEachAlive((p) ->
