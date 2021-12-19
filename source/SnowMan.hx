@@ -159,7 +159,8 @@ class SnowBalls
 		// }
 		base.angularVelocity = (base.velocity.x * 3.1) * 2;
 		// copy to other balls
-		for (i in 1...balls.length)
+		final torsoIndex = 1;
+		for (i in torsoIndex...balls.length)
 		{
 			balls[i].velocity.x = base.velocity.x;
 		}
@@ -228,7 +229,8 @@ class Snowball extends FlxSprite
 	public var ballUnderneath:Snowball;
 	public var isAirborne:Bool;
 
-	var tag:String;
+	public var tag(default, null):String;
+
 	var popVelocity:Float;
 	var gravity:Float = 700;
 	var floor:Float;
@@ -249,6 +251,7 @@ class Snowball extends FlxSprite
 		maxVelocity.y = popVelocity;
 		this.floor = floor;
 		this.frames = frames;
+		// color = FlxColor.fromRGB(240, 514, 117, 255); #bsod
 		minimumFrameIndex = switch (tag)
 		{
 			case "torso": 4;
@@ -285,7 +288,7 @@ class Snowball extends FlxSprite
 			{
 				this.color = FlxColor.CYAN;
 			}
-			if (hitCount <= 0)
+			if (hitsRemaining <= 0)
 			{
 				this.remove();
 				survives = false;

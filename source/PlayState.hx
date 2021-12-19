@@ -29,14 +29,23 @@ class PlayState extends BaseState
 	override public function create()
 	{
 		super.create();
+		layers.shutter.alpha = 1;
 		FlxG.debugger.drawDebug = true;
 		hasReachedDistance = false;
+		// before loading new level, if length is lower than data then it needs to catch up so is already in play
+		var isSnowRollin = level != null && level.levelLength < Data.level.levelLength;
+		// now load stats for use
 		level = Data.level;
 		bg = new FlxBackdrop("assets/images/snow-bg-896x504.png");
 		layers.bg.add(bg);
 		bg.maxVelocity.x = level.maxVelocity * level.bgSpeedFactor;
 
 		snowBody = new SnowBalls(96, 320, level.maxVelocity);
+		// if alreadt rolling, start rollin!
+		if (isSnowRollin)
+		{
+			snowBody.changeVelocityBy(Data.level.snowManVelocityIncrement);
+		}
 		snowTarget = new FlxObject(snowBody.base.x, FlxG.height + 100);
 		snowTarget.maxVelocity.x = bg.maxVelocity.x;
 		add(snowTarget);
@@ -79,6 +88,7 @@ class PlayState extends BaseState
 		layers.overOverlay.add(hud.slowMoMeter);
 		layers.overOverlay.fadeOut(0.1);
 		introAsset = new FramesHelper("assets/images/start-826x200-1x2.png", 826, 1, 2, 200);
+
 		startIntro();
 	}
 
@@ -137,11 +147,14 @@ class PlayState extends BaseState
 			{
 				if (i == texts.length - 1)
 				{
+					final fadeOut = 0.3;
+					layers.bgShutter.alpha = 0;
+					layers.shutter.fadeOut(fadeOut);
 					isPlayInProgress = true;
 					for (et in texts)
 					{
 						FlxTween.tween(et, {y: -200}, 0.5, {ease: FlxEase.bounceOut});
-						et.fadeOut(0.3, onComplete ->
+						et.fadeOut(fadeOut, onComplete ->
 						{
 							et.kill();
 						});
@@ -185,8 +198,9 @@ class PlayState extends BaseState
 
 	function handleMovement()
 	{
-		if (!isPlayInProgress)
+		if (!isPlayInProgress || snowBody.base == null) // todo set isPlayInProgress flase if last remaining ball is chucked away
 		{
+			isPlayInProgress = false;
 			return;
 		}
 		// update direction based on key input
@@ -201,6 +215,10 @@ class PlayState extends BaseState
 			snowBody.changeVelocityBy(changeVelocityBy);
 		}
 
+		// if (snowBody.base == null)
+		// {
+		// 	return; // todo set isPlayInProgress flase if last remaining ball is chucked away
+		// }
 		// if player is moving, back drop and other entities should be
 		if (snowBody.base.velocity.x > 0)
 		{
@@ -226,6 +244,7 @@ class PlayState extends BaseState
 		trace('slow mo stop');
 		isSlowMotion = false;
 		snowBody.restoreCachedSpeed();
+		snowBody.base.velocity.y -= 20; // todo add more accessible var for this
 		slowMoDelay.stop();
 		layers.overOverlay.fadeOut(0.2);
 	}
@@ -233,6 +252,10 @@ class PlayState extends BaseState
 	function removeBall(b:Snowball)
 	{
 		snowBody.removeBall(b);
+		if (b.tag == "head")
+		{
+			loseLevel();
+		}
 	}
 
 	function showRestartOptions()
@@ -250,11 +273,14 @@ class PlayState extends BaseState
 			showRestartOptions();
 		}
 		messages.show(TRYAGAIN, layers.overlay, persistMessage, onComplete);
-		hud.fadeOut(3.0);
+		layers.bgShutter.fadeIn(5);
+		layers.shutter.fadeIn(5);
+		// hud.fadeOut(3.0);
 	}
 
 	function progressToNextLevel()
 	{
+		layers.shutter.fadeIn(0.3);
 		isPlayInProgress = false;
 		Data.level.levelLength += 1000;
 		Data.level.maxVelocity += level.maxVelocityIncrement;
@@ -264,7 +290,7 @@ class PlayState extends BaseState
 		{
 			FlxG.resetState();
 		}
-		messages.show(GOFASTER, layers.overlay, onComplete);
+		messages.show(WIN, layers.overlay, onComplete);
 	}
 
 	override public function update(elapsed:Float)
@@ -284,6 +310,7 @@ class PlayState extends BaseState
 			}
 			if (FlxG.keys.justPressed.LEFT && !isSlowMotion)
 			{
+				// enter slow motion
 				snowBody.cacheSpeed();
 				isSlowMotion = true;
 				slowMoDelay.start();
@@ -336,8 +363,8 @@ class PlayState extends BaseState
 		{
 			if (FlxG.keys.justPressed.ENTER)
 			{
-				// load start data
-				level = Data.level;
+				// reset data
+				Data.init();
 				// begin again
 				FlxG.resetState();
 			}
@@ -367,6 +394,7 @@ class PlayState extends BaseState
 				else
 				{
 					final overrideJumpReady = true;
+
 					snowBody.jump(velocityOverride, overrideJumpReady);
 					final collisionVelocityForfeit = -30;
 					var forfeitDifference = collisionVelocityForfeit + snowBody.base.velocity.x;

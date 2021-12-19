@@ -10,11 +10,6 @@ class BaseState extends FlxState
 
 	public static var delays = new DelayFactory();
 
-	private function new()
-	{
-		super();
-	}
-
 	override public function create()
 	{
 		super.create();
@@ -22,8 +17,8 @@ class BaseState extends FlxState
 		layers = new Layers();
 		messages = new Messages();
 		add(layers);
-		glyphs = new Glyphs("assets/fonts/ice-and-snow-104.png",
-			" !#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~§¶—•∙", 104);
+		glyphs = new Glyphs("assets/fonts/comicblue-60.png", " !#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}£",
+			60);
 		layers.overlay.add(new FlxSprite("assets/images/overlay-frame-896x504.png"));
 	}
 

@@ -11,10 +11,11 @@ class Glyphs
 	public function getText(text:String, x:Int = 0, y:Int = 0)
 	{
 		var t = new FlxBitmapText(font);
-		t.autoSize = false;
-		t.multiLine = true;
-		t.fieldWidth = 180;
-		t.wordWrap = true;
+		t.letterSpacing -= 20;
+		// t.autoSize = false;
+		// t.multiLine = true;
+		// t.fieldWidth = 180;
+		// t.wordWrap = true;
 		t.x = x;
 		t.y = y;
 		t.text = text;
