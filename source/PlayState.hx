@@ -165,17 +165,19 @@ class PlayState extends BaseState
 						et.fadeOut(fadeOut, onComplete ->
 						{
 							et.kill();
-
-							showText("go faster than\nthe carrot!", text ->
+							if (Data.winCount > 0)
 							{
-								text.flicker(2.0, 0.3, onComplete ->
+								showText("go faster than\nthe carrot!", text ->
 								{
-									text.fadeOut(onComplete ->
+									text.flicker(2.0, 0.3, onComplete ->
 									{
-										text.kill();
+										text.fadeOut(onComplete ->
+										{
+											text.kill();
+										});
 									});
 								});
-							});
+							}
 						});
 					}
 				}
@@ -356,7 +358,6 @@ class PlayState extends BaseState
 					});
 				}, yOverride);
 			}
-			final persistMessage = true;
 			messages.show(WIN, layers.overlay, onComplete);
 		}
 	}
@@ -493,7 +494,8 @@ class PlayState extends BaseState
 			if (!points.isHit)
 			{
 				var height = FlxG.height - points.y;
-				var score = Std.int(2 * height);
+				var reductionFactor = height / FlxG.height;
+				var score = Std.int((2 * height * reductionFactor));
 				Data.score += score;
 				var text = glyphs.getText('+$score');
 				text.color = FlxColor.fromRGB(100, 255, 255, 30);
