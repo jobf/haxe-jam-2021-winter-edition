@@ -383,6 +383,11 @@ class Snowball extends FlxSprite
 
 	function syncFrameWithHealth()
 	{
-		animation.frameIndex = minimumFrameIndex + (maxHits - hitCount);
+		var frameIndex = (maxHits - hitCount);
+		if (frameIndex < minimumFrameIndex)
+		{
+			frameIndex = minimumFrameIndex;
+		}
+		animation.frameIndex = frameIndex;
 	}
 }
