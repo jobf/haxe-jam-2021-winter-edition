@@ -83,6 +83,7 @@ class PlayState extends BaseState
 		}
 
 		accelerationDelay = BaseState.delays.Default(0.06, handleMovement, true, true);
+		accelerationDelayDuration = accelerationDelay.duration;
 		slowMoDelay = BaseState.delays.Default(1.0, resetSlowMo, false, false);
 		hud = new HUD(level);
 		layers.bg.add(hud);
@@ -249,12 +250,7 @@ class PlayState extends BaseState
 		}
 		else
 		{
-			if (snowBody.base.x > 0)
-			{
-				final slowDown = -10;
-				snowBody.base.acceleration.x = slowDown;
-				snowBody.changeVelocityBy(0);
-			}
+			slowDown();
 		}
 
 		if (snowBody.base.velocity.x > 0)
@@ -428,10 +424,12 @@ class PlayState extends BaseState
 		{
 			// trace('\n\n\nSnowBalls x y [${snowBody.base.x}, ${snowBody.base.y}] vel ${snowBody.base.velocity} acc ${snowBody.base.acceleration}\n bg velocity ${bg.velocity} bg pos ${bg.x}, ${bg.y}\n\n\n');
 
-			snowBody.log();
+			// snowBody.log();
 		}
 		#end
 	}
+
+	public var doNothing:Float = 0;
 
 	inline function handleCollisions()
 	{
@@ -459,11 +457,14 @@ class PlayState extends BaseState
 
 					snowBody.jump(jumpVelocityPercentage, overrideJumpReady);
 					final collisionVelocityPenalty = -30;
-					var decreaseVelocityBy = collisionVelocityPenalty + snowBody.base.velocity.x;
-					if (decreaseVelocityBy > 0)
-					{
-						snowBody.changeVelocityBy(decreaseVelocityBy * -1);
-					}
+					slowDown(collisionVelocityPenalty);
+					accelerationDelay.duration = accelerationDelayDuration * (5 * (rock.key + 1));
+					FlxTween.tween(this, {doNothing: 1}, 1, {
+						onComplete: tween ->
+						{
+							accelerationDelay.duration = accelerationDelayDuration;
+						}
+					});
 				}
 			}
 		});
@@ -511,4 +512,15 @@ class PlayState extends BaseState
 			}
 		});
 	}
+
+	function slowDown(by:Float = -10)
+	{
+		if (snowBody.base.x > 0)
+		{
+			snowBody.base.acceleration.x = by;
+			snowBody.changeVelocityBy(0);
+		}
+	}
+
+	var accelerationDelayDuration:Float;
 }

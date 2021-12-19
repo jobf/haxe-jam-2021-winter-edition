@@ -142,21 +142,10 @@ class SnowBalls
 		}
 	}
 
-	public function log()
-	{
-		// base.log();
-		// torso.log();
-		// head.log();
-	}
-
 	public function changeVelocityBy(difference:Float)
 	{
 		// set base velocity
 		base.velocity.x += difference;
-		// if (base.velocity.x < 0)
-		// {
-		// 	base.velocity.x = 0;
-		// }
 		base.angularVelocity = (base.velocity.x * 3.1) * 2;
 		// copy to other balls
 		final torsoIndex = 1;
