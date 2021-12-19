@@ -1,6 +1,6 @@
 class HUD extends FlxSpriteGroup
 {
-	public function new(level:LevelStats, margin:Float = 60, ?barWidth:Int, barHeight:Int = 60)
+	public function new(level:LevelStats, margin:Float = 45, ?barWidth:Int, barHeight:Int = 45)
 	{
 		super();
 		var state:PlayState = cast FlxG.state;
@@ -58,7 +58,7 @@ class DrawnBar extends CallbackFlxBar
 {
 	public var mask(default, null):FlxSprite;
 
-	public function new(x:Float = 0, y:Float = 0, ?direction:FlxBarFillDirection, width:Int = 896, height:Int = 60, getValue:() -> Float, min:Float = 0,
+	public function new(x:Float = 0, y:Float = 0, ?direction:FlxBarFillDirection, width:Int = 896, height:Int = 45, getValue:() -> Float, min:Float = 0,
 			max:Float = 100, showBorder:Bool = false)
 	{
 		super(x, y, LEFT_TO_RIGHT, width, height, getValue, min, max);
@@ -66,7 +66,7 @@ class DrawnBar extends CallbackFlxBar
 		// remake the bar with no color; default green is hardcoded in the constructor...
 		createFilledBar(FlxColor.TRANSPARENT, FlxColor.TRANSPARENT, showBorder);
 
-		var asset = new FramesHelper("assets/images/progress-896x60-1x3.png", 896, 1, 3, 60);
+		var asset = new FramesHelper("assets/images/progress-896x45-1x3.png", 896, 1, 3, 45);
 		frames = asset.getFrames();
 		animation.frameIndex = 0;
 

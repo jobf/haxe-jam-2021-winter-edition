@@ -29,14 +29,10 @@ class TitleState extends BaseState
 		{
 			bg.fadeIn(0.8, oncomplete ->
 			{
-				var help = glyphs.getText("press enter to start");
-				help.screenCenter();
-				help.y = FlxG.height - help.height * 3;
-				help.fadeIn(0.3, true, oncomplete ->
+				showText("press enter to start", text ->
 				{
-					help.flicker(0, 0.2);
+					text.flicker(0, 0.2);
 				});
-				layers.overlay.add(help);
 			});
 			layers.bgShutter.fadeOut();
 		});

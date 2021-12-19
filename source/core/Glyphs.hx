@@ -12,6 +12,8 @@ class Glyphs
 	{
 		var t = new FlxBitmapText(font);
 		t.letterSpacing -= 20;
+		t.lineSpacing = 15;
+		t.alignment = CENTER;
 		// t.autoSize = false;
 		// t.multiLine = true;
 		// t.fieldWidth = 180;

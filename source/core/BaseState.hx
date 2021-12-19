@@ -40,4 +40,16 @@ class BaseState extends FlxState
 			trace(FlxG.camera.targetOffset);
 		}
 	}
+
+	function showText(chars:String, onfadecomplete:FlxBitmapText->Void)
+	{
+		var text = glyphs.getText(chars);
+		text.screenCenter();
+		text.y = FlxG.height - text.height * 3;
+		text.fadeIn(0.3, true, oncomplete ->
+		{
+			onfadecomplete(text);
+		});
+		layers.overlay.add(text);
+	}
 }

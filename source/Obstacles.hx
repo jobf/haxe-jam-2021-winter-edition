@@ -85,6 +85,46 @@ class Collectible extends Obstacle
 	}
 }
 
+class Carrot extends FlxSprite
+{
+	var blinkFrameIndex:Int = 1;
+	var blinkedFor:Float = 0;
+	var blinkDuration:Float = 1.05;
+
+	public function new(x, y)
+	{
+		super(x, y);
+		var asset = new FramesHelper("assets/images/carrot-110x124-2x1.png", 110, 2, 1, 124);
+		frames = asset.getFrames();
+		animation.frameIndex = 0;
+	}
+
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
+
+		// blink
+		if (animation.frameIndex != blinkFrameIndex && blinkedFor == 0)
+		{
+			var blinkChance = FlxG.random.int(0, 100);
+			if (blinkChance > 80)
+			{
+				blinkedFor += elapsed;
+				animation.frameIndex = blinkFrameIndex;
+			}
+		}
+		else if (animation.frameIndex == blinkFrameIndex)
+		{
+			blinkedFor += elapsed;
+			if (blinkedFor >= blinkDuration)
+			{
+				blinkedFor = 0;
+				animation.frameIndex = 0;
+			}
+		}
+	}
+}
+
 class Obstacle extends FlxSprite
 {
 	public var isHit(default, null):Bool;

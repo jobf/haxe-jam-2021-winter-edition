@@ -4,7 +4,7 @@ class PlayState extends BaseState
 {
 	var snowHead:Snowball;
 	var snowBody:SnowBalls;
-	var snowTarget:FlxSprite;
+	var snowTarget:Carrot;
 	var bg:FlxBackdrop;
 	var rocks:ObstaclesGround;
 	var birds:ObstaclesAir;
@@ -47,7 +47,7 @@ class PlayState extends BaseState
 		{
 			snowBody.changeVelocityBy(Data.level.snowManVelocityIncrement);
 		}
-		snowTarget = new FlxSprite(snowBody.base.x, snowBody.base.floor - 144, "assets/images/carrot-110x124-1x1.png");
+		snowTarget = new Carrot(snowBody.base.x, snowBody.base.floor - 144);
 		final targetSpeedReduction = 0.7; // todo, as difficulty increases make this number go up to close the gap between carrot and snow
 		snowTarget.maxVelocity.x = snowBody.base.maxVelocity.x * targetSpeedReduction;
 		// trace('snowTarget.maxVelocity ${snowTarget.maxVelocity} snow max ${snowBody.base.maxVelocity}');
@@ -163,6 +163,16 @@ class PlayState extends BaseState
 						et.fadeOut(fadeOut, onComplete ->
 						{
 							et.kill();
+							showText("go faster than\nthe carrot!", text ->
+							{
+								text.flicker(2.0, 0.3, onComplete ->
+								{
+									text.fadeOut(onComplete ->
+									{
+										text.kill();
+									});
+								});
+							});
 						});
 					}
 				}
@@ -337,14 +347,10 @@ class PlayState extends BaseState
 		super.update(elapsed);
 		if (isPlayInProgress)
 		{
-			// if (snowTarget.x > level.levelLength && !lostLevel)
-			// {
-			// 	loseLevel();
-			// }
+			// because it's not in a group that is being updated
 			snowBody.update(elapsed);
 			dial.updateVelocity(snowBody.base.velocity.x, snowBody.base.maxVelocity.x);
 			hasReachedDistance = ((snowBody.base.x / (FlxG.width - endMargin)) * 100) >= 100;
-			// hasReachedDistance = bg.x * -1 > level.levelLength;
 			if (hasReachedDistance)
 			{
 				progressToNextLevel();
