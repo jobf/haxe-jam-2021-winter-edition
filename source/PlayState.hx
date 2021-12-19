@@ -78,19 +78,20 @@ class PlayState extends BaseState
 		layers.overOverlay.add(hud.slowMoMeter);
 		layers.overOverlay.fadeOut(0.1);
 		introAsset = new FramesHelper("assets/images/start-826x200-1x2.png", 826, 1, 2, 200);
+
 		startIntro();
 	}
 
 	function spawnRock()
 	{
-		var rock = rocks.get(FlxG.width * 3, lowObstaclesY);
+		var rock = rocks.get(0, lowObstaclesY);
 		layers.bg.add(rock);
 		layers.overlay.add(rock.warning);
 	}
 
 	function spawnBird()
 	{
-		var bird = birds.get(FlxG.width * 3, midObstaclesY);
+		var bird = birds.get(0, midObstaclesY);
 		layers.overlay.add(bird.warning);
 		layers.foreground.add(bird);
 	}
@@ -101,7 +102,7 @@ class PlayState extends BaseState
 		var waveCenter:Float = 200;
 		// determine y pos of points on a wave
 		var y = Std.int(waveCenter -= (waveAmp * (FlxMath.fastSin(bg.x))));
-		var points = points.get(FlxG.width * 3, y);
+		var points = points.get(0, y);
 
 		layers.overlay.add(points.warning);
 		layers.foreground.add(points);
@@ -272,11 +273,11 @@ class PlayState extends BaseState
 			{
 				progressToNextLevel();
 			}
-			if (FlxG.keys.justPressed.UP)
+			if (FlxG.keys.justPressed.Z)
 			{
 				snowBody.jump();
 			}
-			if (FlxG.keys.justPressed.DOWN)
+			if (FlxG.keys.justPressed.X)
 			{
 				snowBody.pop();
 			}
@@ -317,10 +318,13 @@ class PlayState extends BaseState
 
 	inline function handleCollisions()
 	{
+		// collide rocks
+
 		FlxG.overlap(snowBody.base, rocks.collisionGroup, (snow, rock:Rock) ->
 		{
 			if (!rock.isHit)
 			{
+				rock.collide();
 				var velocityOverride = switch (rock.key)
 				{
 					case 3: -1; // ice block, stop
@@ -336,10 +340,17 @@ class PlayState extends BaseState
 				{
 					final overrideJumpReady = true;
 					snowBody.jump(velocityOverride, overrideJumpReady);
+					final collisionVelocityForfeit = -30;
+					var forfeitDifference = collisionVelocityForfeit + snowBody.base.velocity.x;
+					if (forfeitDifference > 0)
+					{
+						snowBody.changeVelocityBy(forfeitDifference * -1);
+					}
 				}
-				rock.collide();
 			}
 		});
+
+		// collide birds
 
 		FlxG.overlap(snowBody.collisionGroup, birds.collisionGroup, (snow:Snowball, bird:Obstacle) ->
 		{
@@ -352,6 +363,8 @@ class PlayState extends BaseState
 				};
 			}
 		});
+
+		// collide points
 
 		FlxG.overlap(snowBody.collisionGroup, points.collisionGroup, (snow:Snowball, points:Collectible) ->
 		{

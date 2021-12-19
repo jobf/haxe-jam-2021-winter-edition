@@ -75,12 +75,13 @@ class Collectible extends Obstacle
 	override function remove()
 	{
 		// send sprite skyward
-		this.acceleration.y = -2500;
+		this.acceleration.y = -500;
 		// fade out and remove from play
-		this.fadeOut(0.5, tween ->
+		this.fadeOut(1.5, tween ->
 		{
 			this.kill();
 		});
+		FlxTween.tween(this.scale, {x: 7, y: 7}, 0.75);
 	}
 }
 
@@ -89,6 +90,8 @@ class Obstacle extends FlxSprite
 	public var isHit(default, null):Bool;
 	public var key(default, null):Int;
 	public var warning:Warning;
+
+	public var maxDistance(default, null):Int;
 
 	var isPermanent:Bool;
 	var blinkFrameIndex:Int;
@@ -103,7 +106,8 @@ class Obstacle extends FlxSprite
 
 	public function new(x, y, key:Int, frames:FlxTileFrames, behaviours:Array<Delay>, dimensions:Dimensions, isPermanent:Bool = false)
 	{
-		super(x, y);
+		maxDistance = FlxG.width + 300;
+		super(maxDistance, y);
 		this.key = key;
 		this.frames = frames;
 		animation.frameIndex = key;
@@ -111,7 +115,6 @@ class Obstacle extends FlxSprite
 		this.isPermanent = isPermanent;
 		this.behaviours = behaviours;
 		this.dimensions = dimensions;
-
 		isHit = false;
 
 		setSize(this.dimensions.widthC, this.dimensions.heightC);
@@ -153,7 +156,7 @@ class Obstacle extends FlxSprite
 		{
 			trace('obstacle x $x');
 		}
-		var maxDistance = FlxG.width * 3;
+
 		final scaleOffset = 0.3;
 		if (x < FlxG.width && showWarning)
 		{
