@@ -97,6 +97,8 @@ class Carrot extends FlxSprite
 		var asset = new FramesHelper("assets/images/carrot-110x124-2x1.png", 110, 2, 1, 124);
 		frames = asset.getFrames();
 		animation.frameIndex = 0;
+		// oscillate carrot
+		FlxTween.tween(this, {y: y - 15}, 1.1, {type: PINGPONG});
 	}
 
 	override function update(elapsed:Float)

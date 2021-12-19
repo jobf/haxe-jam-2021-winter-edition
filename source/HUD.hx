@@ -86,7 +86,7 @@ class DrawnBar extends CallbackFlxBar
 
 		if (percent > 0)
 		{
-			mask.x = 896 * (percent / 100);
+			mask.x = (896 * (percent / 100)) - 100;
 		}
 	}
 }

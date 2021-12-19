@@ -188,7 +188,7 @@ class PlayState extends BaseState
 	public function getTargetDistance():Float
 	{
 		var targetComplete = (snowTarget.x / (FlxG.width - endMargin)) * 100;
-		if (targetComplete >= 100)
+		if (targetComplete >= 100 && isPlayInProgress && !lostLevel)
 		{
 			loseLevel(TOOSLOW);
 		}
@@ -197,10 +197,9 @@ class PlayState extends BaseState
 
 	public function getActualDistance():Float
 	{
-		var snowManComplete:Float = isPlayInProgress ? 0 : 100;
+		var snowManComplete:Float = (snowBody.base.x / (FlxG.width - endMargin)) * 100;
 		if (isPlayInProgress)
 		{
-			snowManComplete = (snowBody.base.x / (FlxG.width - endMargin)) * 100;
 			if (snowManComplete >= 100)
 			{
 				progressToNextLevel();
