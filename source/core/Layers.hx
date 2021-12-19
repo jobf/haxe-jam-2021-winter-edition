@@ -6,6 +6,7 @@ class Layers extends FlxGroup
 	public var bgShutter(default, null):FlxSprite;
 	public var entities:FlxSpriteGroup;
 	public var foreground:FlxSpriteGroup;
+	public var foregroundDial:FlxSpriteGroup;
 	public var shutter(default, null):FlxSprite;
 	public var overlay:FlxSpriteGroup;
 	public var overOverlay:FlxSpriteGroup;
@@ -27,6 +28,11 @@ class Layers extends FlxGroup
 		foreground.scrollFactor.x = 0;
 
 		add(foreground);
+
+		foregroundDial = new FlxSpriteGroup();
+		foregroundDial.scrollFactor.x = 0;
+		add(foregroundDial);
+
 		shutter = new FlxSprite();
 		shutter.makeGraphic(FlxG.width, FlxG.height);
 		shutter.alpha = 0;

@@ -91,7 +91,7 @@ class PlayState extends BaseState
 		layers.overOverlay.fadeOut(0.1);
 		introAsset = new FramesHelper("assets/images/start-826x200-1x2.png", 826, 1, 2, 200);
 		dial = new Dial();
-		layers.foreground.add(dial);
+		layers.foregroundDial.add(dial);
 		dial.y = FlxG.height - 100;
 		startIntro();
 	}
