@@ -34,7 +34,7 @@ class HUD extends FlxSpriteGroup
 		super.update(elapsed);
 		targetMeter.update(elapsed);
 		progressMeter.update(elapsed);
-		slowMoMeter.update(elapsed);
+		// slowMoMeter.update(elapsed);
 	}
 
 	var targetMeter:DrawnBar;
@@ -151,5 +151,34 @@ class Messages
 				}
 			}
 		});
+	}
+}
+
+class Dial extends FlxSpriteGroup
+{
+	var asset:FramesHelper;
+	var meter:FlxSprite;
+	var casing:FlxSprite;
+
+	public function new()
+	{
+		super();
+		asset = new FramesHelper("assets/images/dial-100x100-2x1.png", 100, 2, 1);
+		meter = new FlxSprite();
+		meter.frames = asset.getFrames();
+		meter.animation.frameIndex = 0;
+		add(meter);
+		casing = new FlxSprite();
+		casing.frames = asset.getFrames();
+		casing.animation.frameIndex = 1;
+		add(casing);
+	}
+
+	public function updateVelocity(velocity:Float, maxVelocity:Float)
+	{
+		final maxRotation = 180;
+		var percentage = velocity / maxVelocity;
+		var rotation = maxRotation * percentage;
+		meter.angle = rotation;
 	}
 }

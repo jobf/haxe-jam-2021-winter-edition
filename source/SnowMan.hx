@@ -111,13 +111,13 @@ class SnowBalls
 		isPopReady = true;
 	}
 
-	public function jump(?velocityOverride:Float, readyOverride:Bool = false)
+	public function jump(?jumpVelocityPercentage:Float, readyOverride:Bool = false)
 	{
 		if (isJumpReady || readyOverride)
 		{
 			if (base.alive && !base.isAirborne)
 			{
-				base.pop(velocityOverride);
+				base.pop(jumpVelocityPercentage);
 				isJumpReady = false;
 				jumpCoolOff.start();
 			}
@@ -163,6 +163,7 @@ class SnowBalls
 		for (i in torsoIndex...balls.length)
 		{
 			balls[i].velocity.x = base.velocity.x;
+			balls[i].acceleration.x = base.acceleration.x;
 		}
 	}
 
@@ -233,7 +234,9 @@ class Snowball extends FlxSprite
 
 	var popVelocity:Float;
 	var gravity:Float = 700;
-	var floor:Float;
+
+	public var floor(default, null):Float;
+
 	var cacheVelocity:FlxPoint = FlxPoint.get();
 	var cacheAcceleration:FlxPoint = FlxPoint.get();
 	var cacheAngularVelocity:Float = 0;
@@ -311,12 +314,12 @@ class Snowball extends FlxSprite
 		trace(logText);
 	}
 
-	public function pop(?velocityOverride:Float)
+	public function pop(velocityPercentage:Float = 1.0)
 	{
 		isAirborne = true;
-		popVelocity = velocityOverride == null ? popVelocity : velocityOverride;
+		// var vpopVel = velocityOverride == null ? popVelocity : popVelocity * velocityOverride;
 		// get airborne
-		velocity.y = popVelocity * -1;
+		velocity.y = (popVelocity * velocityPercentage) * -1;
 	}
 
 	var spriteHeight = 60;
@@ -329,7 +332,12 @@ class Snowball extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
-
+		// don't go backwards
+		if (velocity.x < 0)
+		{
+			velocity.x = 0;
+			acceleration.x = 0;
+		}
 		var cannotBeFurtherThan = ballUnderneath == null ? floor : ballUnderneath.y;
 		var amountPastBottom = currentBottomEdge() - cannotBeFurtherThan;
 		if (amountPastBottom < 0)
@@ -354,7 +362,7 @@ class Snowball extends FlxSprite
 		{
 			velocity.y = ballUnderneath.velocity.y;
 			angularVelocity = ballUnderneath.angularVelocity * -1;
-			acceleration.y = ballUnderneath.acceleration.y;
+			// acceleration.y = ballUnderneath.acceleration.y;
 		}
 	}
 

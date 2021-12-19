@@ -1,3 +1,4 @@
+import HUD;
 import Obstacles;
 import SnowMan;
 import core.*;
@@ -25,7 +26,7 @@ using core.Delay;
 using core.FlxSpriteExtensions;
 using flixel.util.FlxSpriteUtil;
 
-#if web
-import js.Browser.document;
-import ob.exposehtml.Expose;
-#end
+// #if web
+// import js.Browser.document;
+// import ob.exposehtml.Expose;
+// #end
