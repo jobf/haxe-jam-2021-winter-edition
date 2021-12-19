@@ -122,7 +122,7 @@ class Messages
 		return s;
 	}
 
-	public function show(m:Message, group:FlxSpriteGroup)
+	public function show(m:Message, group:FlxSpriteGroup, persistMessage:Bool = false, onComplete:Void->Void = null)
 	{
 		final tweenDuration = 0.25;
 		var x = Std.int((FlxG.width * 0.5) - (asset.frameSizeW * 0.5));
@@ -134,14 +134,21 @@ class Messages
 			ease: FlxEase.sineIn,
 			onComplete: tween ->
 			{
-				FlxTween.tween(s, {y: -1000}, tweenDuration, {
-					startDelay: 1.0,
-					ease: FlxEase.sineOut,
-					onComplete: tween ->
-					{
-						s.kill();
-					}
-				});
+				if (!persistMessage)
+				{
+					FlxTween.tween(s, {y: -1000}, tweenDuration, {
+						startDelay: 1.0,
+						ease: FlxEase.sineOut,
+						onComplete: tween ->
+						{
+							if (onComplete != null)
+							{
+								onComplete();
+							}
+							s.kill();
+						}
+					});
+				}
 			}
 		});
 	}

@@ -6,6 +6,7 @@ typedef LevelStats =
 	var bgSpeedFactor:Float;
 	var snowManVelocityIncrement:Float;
 	var levelLength:Float;
+	var maxVelocityIncrement:Float;
 }
 
 typedef Dimensions =
@@ -166,6 +167,11 @@ class SnowBalls
 
 	public function removeBall(toRemove:Snowball)
 	{
+		if (balls.length == 0)
+		{
+			return;
+		}
+		toRemove.remove();
 		balls.remove(toRemove);
 		for (i => b in balls)
 		{
@@ -249,6 +255,8 @@ class Snowball extends FlxSprite
 			case "base": 8;
 			case _: 0;
 		}
+		var isHead = minimumFrameIndex == 0;
+		maxHits = isHead ? 3 : 2;
 		syncFrameWithHealth();
 		hitCount = 0;
 		setSize(dimensions.heightC, dimensions.widthC);
@@ -272,15 +280,19 @@ class Snowball extends FlxSprite
 		{
 			this.flicker();
 			hitCount++;
-			syncFrameWithHealth();
-			if (hitCount == 1)
+			var hitsRemaining = maxHits - hitCount;
+			if (hitsRemaining <= 1)
 			{
 				this.color = FlxColor.CYAN;
 			}
-			if (hitCount == 2)
+			if (hitCount <= 0)
 			{
 				this.remove();
 				survives = false;
+			}
+			else
+			{
+				syncFrameWithHealth();
 			}
 		}
 		return survives;

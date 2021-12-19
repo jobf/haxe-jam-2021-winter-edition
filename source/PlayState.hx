@@ -24,6 +24,7 @@ class PlayState extends BaseState
 	var slowMoFactor:Float = 0.9;
 	var hud:HUD;
 	var introAsset:FramesHelper;
+	var lostLevel:Bool = false;
 
 	override public function create()
 	{
@@ -78,7 +79,6 @@ class PlayState extends BaseState
 		layers.overOverlay.add(hud.slowMoMeter);
 		layers.overOverlay.fadeOut(0.1);
 		introAsset = new FramesHelper("assets/images/start-826x200-1x2.png", 826, 1, 2, 200);
-
 		startIntro();
 	}
 
@@ -232,23 +232,56 @@ class PlayState extends BaseState
 
 	function removeBall(b:Snowball)
 	{
-		if (snowBody.base == null)
+		snowBody.removeBall(b);
+	}
+
+	function showRestartOptions()
+	{
+		trace('restart?');
+	}
+
+	function loseLevel()
+	{
+		lostLevel = true;
+		isPlayInProgress = false;
+		final persistMessage = true;
+		final onComplete = () ->
 		{
-			// end play
-			isPlayInProgress = false;
+			showRestartOptions();
 		}
-		else
+		messages.show(TRYAGAIN, layers.overlay, persistMessage, onComplete);
+		hud.fadeOut(3.0);
+	}
+
+	function progressToNextLevel()
+	{
+		isPlayInProgress = false;
+		Data.level.levelLength += 1000;
+		Data.level.maxVelocity += level.maxVelocityIncrement;
+		Data.level.bgSpeedFactor += 0.7;
+		Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
+		final onComplete = () ->
 		{
-			b.remove();
-			snowBody.removeBall(b);
+			FlxG.resetState();
 		}
+		messages.show(GOFASTER, layers.overlay, onComplete);
 	}
 
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		if (snowTarget.x > level.levelLength && !lostLevel)
+		{
+			loseLevel();
+		}
 		if (isPlayInProgress)
 		{
+			snowBody.update(elapsed);
+			hasReachedDistance = bg.x * -1 > level.levelLength;
+			if (hasReachedDistance)
+			{
+				progressToNextLevel();
+			}
 			if (FlxG.keys.justPressed.LEFT && !isSlowMotion)
 			{
 				snowBody.cacheSpeed();
@@ -267,12 +300,6 @@ class PlayState extends BaseState
 				resetSlowMo();
 			}
 
-			snowBody.update(elapsed);
-			hasReachedDistance = bg.x * -1 > level.levelLength;
-			if (hasReachedDistance)
-			{
-				progressToNextLevel();
-			}
 			if (FlxG.keys.justPressed.Z)
 			{
 				snowBody.jump();
@@ -305,15 +332,16 @@ class PlayState extends BaseState
 
 			snowBody.log();
 		}
-	}
-
-	function progressToNextLevel()
-	{
-		Data.level.levelLength += 1000;
-		Data.level.maxVelocity += 10;
-		Data.level.bgSpeedFactor += 0.7;
-		Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
-		FlxG.resetState();
+		if (lostLevel)
+		{
+			if (FlxG.keys.justPressed.ENTER)
+			{
+				// load start data
+				level = Data.level;
+				// begin again
+				FlxG.resetState();
+			}
+		}
 	}
 
 	inline function handleCollisions()

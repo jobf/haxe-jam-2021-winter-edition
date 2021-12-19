@@ -4,6 +4,7 @@ class Data
 		maxVelocity: 30,
 		bgSpeedFactor: 15,
 		snowManVelocityIncrement: 1,
-		levelLength: 4000
+		levelLength: 4000,
+		maxVelocityIncrement: 2,
 	}
 }
