@@ -147,6 +147,7 @@ class PlayState extends BaseState
 
 		var duration = 0.7;
 		var texts = [ready, go];
+
 		for (i => t in texts)
 		{
 			var tween = FlxTween.tween(t, {x: endX, y: endY}, duration, {ease: FlxEase.bounceIn});
@@ -164,6 +165,7 @@ class PlayState extends BaseState
 						et.fadeOut(fadeOut, onComplete ->
 						{
 							et.kill();
+
 							showText("go faster than\nthe carrot!", text ->
 							{
 								text.flicker(2.0, 0.3, onComplete ->
@@ -339,11 +341,22 @@ class PlayState extends BaseState
 			Data.level.levelLength += 1000; // todo this isn't used anymore?
 			Data.level.maxVelocity += level.maxVelocityIncrement;
 			Data.level.bgSpeedFactor += 0.7;
+			Data.winCount++;
 			// Data.level.snowManVelocityIncrement = Data.level.bgSpeedFactor;
 			final onComplete = () ->
 			{
-				FlxG.resetState();
+				final yOverride = FlxG.height;
+				showText('you are on a roll!\n score is ${Data.score}\nprepare for round ${Data.winCount + 1}', text ->
+				{
+					FlxTween.tween(text, {y: -300}, 5, {
+						onComplete: tween ->
+						{
+							FlxG.resetState();
+						}
+					});
+				}, yOverride);
 			}
+			final persistMessage = true;
 			messages.show(WIN, layers.overlay, onComplete);
 		}
 	}
@@ -479,6 +492,24 @@ class PlayState extends BaseState
 		{
 			if (!points.isHit)
 			{
+				var height = FlxG.height - points.y;
+				var score = Std.int(2 * height);
+				Data.score += score;
+				var text = glyphs.getText('+$score');
+				text.color = FlxColor.fromRGB(100, 255, 255, 30);
+				final textScale = 0.9;
+				text.scale.x = textScale;
+				text.scale.y = textScale;
+				text.x = points.centerX - (text.width * 0.5);
+				text.y = points.y - (text.height); // * 0.5);
+				layers.bg.add(text);
+				FlxTween.tween(text, {y: -60}, 2, {
+					onComplete: tween ->
+					{
+						text.kill();
+					}
+				});
+				text.fadeOut(2.3);
 				points.collide();
 			}
 		});

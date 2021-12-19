@@ -17,7 +17,12 @@ class Data
 			levelLength: inits.levelLength,
 			maxVelocityIncrement: inits.maxVelocityIncrement,
 		}
+		score = 0;
+		winCount = 0;
 	}
+
+	public static var score:Int;
+	public static var winCount:Int;
 
 	public static var level:LevelStats;
 }

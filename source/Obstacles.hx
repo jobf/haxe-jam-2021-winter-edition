@@ -130,8 +130,19 @@ class Obstacle extends FlxSprite
 	public var isHit(default, null):Bool;
 	public var key(default, null):Int;
 	public var warning:Warning;
-
+	public var centerX(get, default):Float;
+	public var centerY(get, default):Float;
 	public var maxDistance(default, null):Int;
+
+	public function get_centerX():Float
+	{
+		return x + dimensions.widthV * 0.5;
+	}
+
+	public function get_centerY():Float
+	{
+		return y + dimensions.heightV * 0.5;
+	}
 
 	var isPermanent:Bool;
 	var blinkFrameIndex:Int;
@@ -156,7 +167,6 @@ class Obstacle extends FlxSprite
 		this.behaviours = behaviours;
 		this.dimensions = dimensions;
 		isHit = false;
-
 		setSize(this.dimensions.widthC, this.dimensions.heightC);
 		centerOffsets();
 		#if debug
